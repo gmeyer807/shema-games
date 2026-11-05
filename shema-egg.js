@@ -46,7 +46,7 @@
   .egg-foot { font-size: 13px !important; color: var(--text-2) !important; text-align: center; }
   .egg-go { align-self: center; margin-top: 4px; border: 0; border-radius: 10px; background: var(--amber); color: var(--bg-1); font: inherit; font-weight: 700; font-size: 15px; padding: 10px 22px; cursor: pointer; }
   .egg-go:hover { background: var(--amber-hi); }
-  @media (prefers-reduced-motion: reduce) { .egg, .egg-card, .shema-logo.egg-hot.egg-tease { animation: none; } .shema-logo.egg-hot { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .egg, .egg-card { animation: none; } .shema-logo.egg-hot { transition: none; } }
   @media (max-width: 420px) { .egg-card { padding: 22px 18px 18px; gap: 12px; } .egg h2 { font-size: 20px; } }`;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
