@@ -137,7 +137,35 @@
   .art .rooftops { position: absolute; left: 0; right: 0; bottom: 0; height: 38%; background: var(--rn-wall); clip-path: polygon(0 18%, 30% 18%, 30% 100%, 40% 100%, 40% 0, 74% 0, 74% 100%, 82% 100%, 82% 26%, 100% 26%, 100% 100%, 0 100%); }
   .art .sq { position: absolute; left: 30%; bottom: 40%; width: 26%; aspect-ratio: 1; background-size: 600% 100%; background-repeat: no-repeat; animation: sp .7s steps(6) infinite, hop 1.4s ease-in-out infinite; }
   @keyframes hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-34%); } }
-  @media (prefers-reduced-motion: reduce) { .art .sp, .art .sq, .art .zz span, .pcard { animation: none; } }
+  /* ---------- two views in the card: the Sandbox first, the games one tap away ---------- */
+  .pcard[data-page="home"] { width: min(760px, 100%); }
+  .pcard[data-page="games"] { width: min(860px, 100%); }
+  .page { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+  #pageHome { animation: fromLeft .28s cubic-bezier(.2, .8, .3, 1); }
+  #pageGames { animation: fromRight .28s cubic-bezier(.2, .8, .3, 1); }
+  @keyframes fromLeft { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
+  @keyframes fromRight { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+  .tiles.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .tile.hero { flex-direction: row; align-items: stretch; }
+  .tile.hero .art { width: 54%; flex-shrink: 0; aspect-ratio: 4 / 3; }
+  .tile.hero .tbody { justify-content: center; padding: 20px 22px; gap: 8px; }
+  .tile.hero .tname { font-size: 26px; }
+  .tile.hero .go { font-size: 16px; padding: 11px 18px; }
+
+  .more { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 12px 16px 12px 12px; border: 2px solid var(--line); border-radius: 14px; background: var(--bg-2); cursor: pointer; transition: border-color .15s, transform .15s; }
+  .more:hover { border-color: var(--amber); transform: translateY(-1px); }
+  .more .chips { display: flex; flex-shrink: 0; }
+  .more .chip { width: 44px; height: 44px; border-radius: 50%; background-color: var(--rm-wall); background-size: 600% 100%; background-repeat: no-repeat; border: 2px solid var(--bg-2); }
+  .more .chip + .chip { margin-left: -12px; background-color: var(--rn-sky-a); }
+  .more .mtext { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .more .mtext b { font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
+  .more .mtext small { font-family: var(--mono); font-size: 11px; color: var(--text-2); }
+  .more .marrow { margin-left: auto; width: 22px; height: 22px; color: var(--amber); flex-shrink: 0; transition: transform .15s; }
+  .more:hover .marrow { transform: translateX(3px); }
+  .crumb { align-self: flex-start; min-height: 32px; }
+
+  @media (prefers-reduced-motion: reduce) { .art .sp, .art .sq, .art .zz span, .pcard, #pageHome, #pageGames { animation: none; } }
 
   @media (max-width: 760px) and (orientation: portrait) {
     .pcard { padding: 16px; gap: 14px; }
@@ -148,6 +176,16 @@
     .tbody { padding: 12px; gap: 4px; }
     .tname { font-size: 18px; } .tdesc { font-size: 13px; }
     .go { font-size: 14px; padding: 7px 12px; }
+    .page { gap: 14px; }
+    .tiles.two { grid-template-columns: minmax(0, 1fr); }
+    .tile.hero { flex-direction: column; }
+    .tile.hero .art { width: 100%; aspect-ratio: 16 / 10; min-height: 0; }
+    .tile.hero .tbody { padding: 14px 16px 16px; gap: 6px; }
+    .tile.hero .tname { font-size: 22px; }
+    .tile.hero .go { font-size: 15px; padding: 10px 16px; }
+    .more { padding: 10px 12px 10px 10px; gap: 12px; }
+    .more .chip { width: 38px; height: 38px; }
+    .more .mtext b { font-size: 16px; }
   }
   @media (orientation: landscape) and (max-height: 520px) {
     .pcard { padding: 14px 16px; gap: 10px; }
@@ -156,6 +194,12 @@
     .art { aspect-ratio: 21 / 9; }
     .tbody { padding: 10px 12px; gap: 4px; }
     .tdesc { font-size: 13px; }
+    .page { gap: 10px; }
+    .tile.hero .art { width: 46%; aspect-ratio: auto; min-height: 150px; }
+    .tile.hero .tbody { padding: 12px 16px; gap: 5px; }
+    .tile.hero .tname { font-size: 21px; }
+    .more { padding: 8px 14px 8px 10px; }
+    .more .chip { width: 34px; height: 34px; }
   }
 
   /* ---------- how to hold the phone: a badge on each tile, and a step before the game starts ---------- */
@@ -242,7 +286,7 @@
 <script>document.body.classList.add('intro-on');</script>
 
 <div class="picker" id="picker">
-  <div class="pcard" role="dialog" aria-modal="true" aria-labelledby="pTitle">
+  <div class="pcard" role="dialog" aria-modal="true" data-page="home" aria-labelledby="pTitleHome">
     <div class="phead">
       <svg class="shema-logo" viewBox="-8 -8 932 316" role="img" aria-label="SHEMA">
       <g class="sl-heb">
@@ -256,9 +300,38 @@
       <div class="sub">NOISE EVENT<br>MONITOR</div>
       <button class="btn close" id="btnBack" type="button" hidden>Back to the game</button>
     </div>
-    <h1 class="ptitle" id="pTitle">What do you want to play?</h1>
-    <p>All three happen on Jacaranda Street, with Shema listening. You can switch at any time with the button at the top.</p>
-    <div class="tiles">
+    <section class="page" id="pageHome">
+      <h1 class="ptitle" id="pTitleHome">Hear your street the way Shema does</h1>
+      <p>The Sandbox is Jacaranda Street with Shema listening. Put noises on it and watch Shema measure how loud each one is, work out where it is and judge whether it breaks the rules.</p>
+      <button class="tile hero" type="button" data-game="sandbox" data-go="Open the Sandbox" id="tileSandbox">
+        <div class="art street" aria-hidden="true">
+          <div class="road"></div>
+          <svg class="arc" viewBox="0 0 160 90" preserveAspectRatio="none"><path d="M12 86 A68 68 0 0 1 148 86" fill="none" stroke="var(--amber)" stroke-width="1.4" stroke-dasharray="4 4"/><path d="M80 86 L118 30" stroke="var(--amber)" stroke-width="2"/></svg>
+          <div class="sp" style="--c: var(--cls-dog); left: 14%; top: 10%; background-image: url(assets/dog.webp)"></div>
+          <div class="sp" style="--c: var(--cls-engine); left: 64%; top: 22%; background-image: url(assets/taxi.webp)"></div>
+          <div class="sp" style="--c: var(--cls-power_tools); left: 30%; top: 58%; background-image: url(assets/frog.webp)"></div>
+          <div class="sp" style="--c: var(--cls-weather); left: 74%; top: 60%; width: 13%; background-image: url(assets/owl.webp); animation-delay: -.4s"></div>
+          <div class="dev"></div>
+        </div>
+        <div class="tbody">
+          <div class="tag">Free play<span class="now" hidden>Playing</span></div>
+          <div class="tname">Sandbox</div>
+          <div class="tdesc">No score and no clock. Drag a dog, a taxi, a drill or a storm anywhere you like and see what Shema makes of it.</div>
+          <span class="hold tall" data-orient="portrait"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg><span>Hold phone upright</span></span>
+          <span class="go">Open the Sandbox</span>
+        </div>
+      </button>
+      <button class="more" type="button" id="btnGames">
+        <span class="chips" aria-hidden="true"><span class="chip" style="background-image: url(assets/owl.webp)"></span><span class="chip" style="background-image: url(assets/squirrel.webp)"></span></span>
+        <span class="mtext"><b>Or try a fun game</b><small>Let Grandma Sleep · Squirrel Run</small></span>
+        <svg class="marrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </section>
+    <section class="page" id="pageGames" hidden>
+      <button class="btn crumb" type="button" id="btnToSandbox">← Back to the Sandbox</button>
+      <h1 class="ptitle" id="pTitleGames">Try a fun game</h1>
+      <p>Both happen on Jacaranda Street at night, with Shema listening. You can switch at any time with the button at the top.</p>
+      <div class="tiles two">
       <button class="tile" type="button" data-game="grandma" data-go="Play" id="tileGrandma">
         <div class="art night" aria-hidden="true">
           <div class="moon"></div>
@@ -290,24 +363,8 @@
           <span class="go">Run</span>
         </div>
       </button>
-      <button class="tile" type="button" data-game="sandbox" data-go="Open" id="tileSandbox">
-        <div class="art street" aria-hidden="true">
-          <div class="road"></div>
-          <svg class="arc" viewBox="0 0 160 90" preserveAspectRatio="none"><path d="M12 86 A68 68 0 0 1 148 86" fill="none" stroke="var(--amber)" stroke-width="1.4" stroke-dasharray="4 4"/><path d="M80 86 L118 30" stroke="var(--amber)" stroke-width="2"/></svg>
-          <div class="sp" style="--c: var(--cls-dog); left: 14%; top: 10%; background-image: url(assets/dog.webp)"></div>
-          <div class="sp" style="--c: var(--cls-engine); left: 64%; top: 22%; background-image: url(assets/taxi.webp)"></div>
-          <div class="sp" style="--c: var(--cls-power_tools); left: 30%; top: 58%; background-image: url(assets/frog.webp)"></div>
-          <div class="dev"></div>
-        </div>
-        <div class="tbody">
-          <div class="tag">Free play<span class="now" hidden>Playing</span></div>
-          <div class="tname">Sandbox</div>
-          <div class="tdesc">Put noises anywhere on the street and watch Shema measure, locate and judge them.</div>
-          <span class="hold tall" data-orient="portrait"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg><span>Hold phone upright</span></span>
-          <span class="go">Open</span>
-        </div>
-      </button>
-    </div>
+      </div>
+    </section>
     <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg><span id="sndNote">Sound is on. Turn it off with the speaker button in the game.</span></div>
   </div>
 </div>
@@ -336,6 +393,7 @@
     sandbox: { src: 'sandbox.html', name: 'Sandbox', orient: 'portrait', why: 'The street sits on top with the tray of noises under it, and Shema\u2019s readout has room to scroll below.' },
   };
   const picker = document.getElementById('picker'), btnBack = document.getElementById('btnBack');
+  const pcard = picker.querySelector('.pcard'), pageHome = document.getElementById('pageHome'), pageGames = document.getElementById('pageGames');
   let frame = null, current = null, ac = null, bus = null;
 
   // One audio context for the whole app, made on the tap that picks a game so the browser lets it play.
@@ -362,8 +420,20 @@
       t.querySelector('.go').textContent = on ? 'Keep playing' : t.dataset.go;
     });
     picker.hidden = false;
-    (current ? document.querySelector(`.tile[data-game="${current}"]`) : document.getElementById('tileGrandma')).focus({ preventScroll: true });
+    // the Sandbox view comes first; while one of the games is open, the menu comes back on the games view
+    const page = current && current !== 'sandbox' ? 'games' : 'home';
+    showPage(page, current ? document.querySelector(`.tile[data-game="${current}"]`) : null);
   }
+  // the card has two views: the Sandbox (home) and the two games
+  function showPage(page, focus) {
+    pcard.dataset.page = page;
+    pageHome.hidden = page !== 'home'; pageGames.hidden = page !== 'games';
+    pcard.setAttribute('aria-labelledby', page === 'home' ? 'pTitleHome' : 'pTitleGames');
+    picker.scrollTop = 0;
+    (focus || document.getElementById(page === 'home' ? 'tileSandbox' : 'tileGrandma')).focus({ preventScroll: true });
+  }
+  document.getElementById('btnGames').addEventListener('click', () => showPage('games'));
+  document.getElementById('btnToSandbox').addEventListener('click', () => showPage('home', document.getElementById('btnGames')));
   function closePicker() { picker.hidden = true; call('__shemaPause', false); try { frame.focus(); } catch (e) { } }
   function pick(game) {
     context();                              // unlock sound inside this tap
@@ -429,7 +499,11 @@
   upright.addEventListener ? upright.addEventListener('change', markBadges) : upright.addListener(markBadges);
   document.querySelectorAll('.tile').forEach(t => t.addEventListener('click', () => pick(t.dataset.game)));
   btnBack.addEventListener('click', closePicker);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && frame && !picker.hidden && gate.hidden) closePicker(); });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape' || picker.hidden || !gate.hidden) return;
+    if (frame) closePicker();
+    else if (!pageGames.hidden) showPage('home', document.getElementById('btnGames'));
+  });
   try { if (localStorage.getItem('shema.sound') === '0') document.getElementById('sndNote').textContent = 'Sound is off. Turn it on with the speaker button in the game.'; } catch (e) { }
 
   // ---- opening sequence (same as the Shema app): the logo lands in the picker card ----

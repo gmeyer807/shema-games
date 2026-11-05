@@ -198,13 +198,17 @@ for (const s of SCREENS) {
       await p.locator('#picker').waitFor({ state: 'visible' });
       await p.waitForFunction(() => !document.getElementById('intro'), null, { timeout: 6000 }).catch(() => { });
       const intro = p.locator('#intro'); if (await intro.count()) { await intro.tap().catch(() => { }); await p.waitForFunction(() => !document.getElementById('intro')); }
-      for (const x of await checkControls(p, '#picker')) bad.push(`menu: ${x}`);
+      for (const x of await checkControls(p, '#picker')) bad.push(`menu, Sandbox view: ${x}`);
+      await p.locator('#btnGames').tap();
+      for (const x of await checkControls(p, '#picker')) bad.push(`menu, games view: ${x}`);
+      await p.locator('#btnToSandbox').tap();
       const want = { grandma: 'portrait', squirrel: 'landscape', sandbox: 'portrait' };
       for (const [game, tile] of [['grandma', '#tileGrandma'], ['squirrel', '#tileSquirrel'], ['sandbox', '#tileSandbox']]) {
         if (!(await p.locator('#picker').isVisible())) {
           await p.frameLocator('#game').locator('#btnMode').tap();
           await p.locator('#picker').waitFor({ state: 'visible' });
         }
+        if (!(await p.locator(tile).isVisible())) await p.locator(tile === '#tileSandbox' ? '#btnToSandbox' : '#btnGames').tap();
         await p.locator(tile).tap();
         await p.locator('#picker').waitFor({ state: 'hidden' });
         const gate = p.locator('#gate');

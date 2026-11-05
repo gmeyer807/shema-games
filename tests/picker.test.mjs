@@ -20,15 +20,53 @@ async function home(opts) {
   return h;
 }
 const gameFrame = page => page.frameLocator('#game');
+/** Taps a game's tile, turning the menu card to the view that has it first (the Sandbox view or the games view). */
+async function choose(page, tile, how = 'click') {
+  if (!(await page.locator(tile).isVisible())) await page.locator(tile === '#tileSandbox' ? '#btnToSandbox' : '#btnGames')[how]();
+  await page.locator(tile)[how]();
+}
 
-test('the intro plays by itself and lands on the picker with three games', async () => {
+test('the intro plays by itself and lands on the Sandbox, with the two games one tap away', async () => {
   const h = await home({ reduced: false });
   try {
-    assert.equal(await h.page.locator('#intro').count(), 0, 'intro is removed when it finishes');
-    assert.equal(await h.page.locator('.tile').count(), 3);
-    assert.deepEqual(await h.page.locator('.tname').allTextContents(), GAMES.map(g => g.name));
+    const p = h.page;
+    assert.equal(await p.locator('#intro').count(), 0, 'intro is removed when it finishes');
+    assert.equal(await p.locator('.tile').count(), 3);
+    assert.equal(await p.locator('#tileSandbox').isVisible(), true, 'the Sandbox is the first thing shown');
+    assert.equal(await p.locator('#tileGrandma').isVisible(), false);
+    assert.equal(await p.locator('#tileSquirrel').isVisible(), false);
+    assert.match(await p.locator('#btnGames').textContent(), /Or try a fun game/);
+    await p.locator('#btnGames').click();
+    assert.equal(await p.locator('#tileSandbox').isVisible(), false);
+    assert.deepEqual(await p.locator('.tile:visible .tname').allTextContents(), ['Let Grandma Sleep', 'Squirrel Run']);
+    assert.equal(await p.locator('.pcard').getAttribute('aria-labelledby'), 'pTitleGames');
+    await p.locator('#btnToSandbox').click();
+    assert.equal(await p.locator('#tileSandbox').isVisible(), true);
+    await p.locator('#btnGames').click();
+    await p.keyboard.press('Escape');
+    assert.equal(await p.locator('#tileSandbox').isVisible(), true, 'Escape on the games view goes back to the Sandbox');
     assert.equal(await h.page.locator('#btnBack').isVisible(), false, 'no "back to the game" before a game is open');
     assert.equal(await h.page.locator('#game').count(), 0);
+    assert.deepEqual(h.problems, []);
+  } finally { await h.close(); }
+});
+
+test('the menu comes back on the games view during a game, and on the Sandbox view during the Sandbox', async () => {
+  const h = await home();
+  try {
+    const p = h.page;
+    await choose(p, '#tileSquirrel');
+    await gameFrame(p).locator('#btnMode').click();
+    await p.locator('#picker').waitFor({ state: 'visible' });
+    assert.equal(await p.locator('#tileSquirrel').isVisible(), true);
+    assert.equal(await p.locator('#tileSquirrel .go').textContent(), 'Keep playing');
+    await choose(p, '#tileSandbox');
+    await p.locator('#picker').waitFor({ state: 'hidden' });
+    await gameFrame(p).locator('#btnMode').click();
+    await p.locator('#picker').waitFor({ state: 'visible' });
+    assert.equal(await p.locator('#tileSandbox').isVisible(), true);
+    assert.equal(await p.locator('#tileSandbox .go').textContent(), 'Keep playing');
+    assert.equal(await p.locator('#tileSandbox .now').isVisible(), true);
     assert.deepEqual(h.problems, []);
   } finally { await h.close(); }
 });
@@ -49,7 +87,7 @@ for (const g of GAMES) {
   test(`picking ${g.name} opens it in the frame, embedded, without its own intro`, async () => {
     const h = await home();
     try {
-      await h.page.locator(g.tile).click();
+      await choose(h.page, g.tile);
       await h.page.locator('#picker').waitFor({ state: 'hidden' });
       const frame = h.page.locator('#game');
       assert.equal(await frame.getAttribute('src'), `${g.src}?embed=1`);
@@ -67,7 +105,7 @@ for (const g of GAMES) {
 test('the switch button opens the picker over the game, and Back / Escape / Keep playing return to it', async () => {
   const h = await home();
   try {
-    await h.page.locator('#tileGrandma').click();
+    await choose(h.page, '#tileGrandma');
     const f = gameFrame(h.page);
     await f.locator('#btnMode').click();
     await h.page.locator('#picker').waitFor({ state: 'visible' });
@@ -86,7 +124,7 @@ test('the switch button opens the picker over the game, and Back / Escape / Keep
     await h.page.locator('#picker').waitFor({ state: 'hidden' });
 
     await f.locator('#btnMode').click();
-    await h.page.locator('#tileGrandma').click();
+    await choose(h.page, '#tileGrandma');
     await h.page.locator('#picker').waitFor({ state: 'hidden' });
     assert.equal(await h.page.locator('#game').count(), 1, 'same game is kept, not reloaded');
     assert.deepEqual(h.problems, []);
@@ -96,7 +134,7 @@ test('the switch button opens the picker over the game, and Back / Escape / Keep
 test('the picker pauses the game underneath and un-pauses it on return', async () => {
   const h = await home();
   try {
-    await h.page.locator('#tileGrandma').click();
+    await choose(h.page, '#tileGrandma');
     const f = gameFrame(h.page);
     await f.locator('#btnMode').waitFor();
     for (let i = 0; i < 3; i++) await f.locator('#btnNext').click();
@@ -118,9 +156,9 @@ test('the picker pauses the game underneath and un-pauses it on return', async (
 test('switching to another game replaces the frame and stops the old one', async () => {
   const h = await home();
   try {
-    await h.page.locator('#tileSandbox').click();
+    await choose(h.page, '#tileSandbox');
     await gameFrame(h.page).locator('#btnMode').click();
-    await h.page.locator('#tileSquirrel').click();
+    await choose(h.page, '#tileSquirrel');
     await h.page.locator('#picker').waitFor({ state: 'hidden' });
     assert.equal(await h.page.locator('iframe').count(), 1);
     assert.equal(await h.page.locator('#game').getAttribute('src'), 'squirrel.html?embed=1');
@@ -143,8 +181,11 @@ test('the sound note follows the saved setting', async () => {
 test('works on a phone held upright: one column, no sideways scroll', async () => {
   const h = await home({ viewport: { width: 375, height: 740 }, mobile: true, touch: true });
   try {
-    const boxes = await h.page.locator('.tile').evaluateAll(els => els.map(e => e.getBoundingClientRect().left));
-    assert.ok(boxes.every(x => Math.abs(x - boxes[0]) < 1), 'tiles are stacked');
+    assert.ok(await noHorizontalScroll(h.page));
+    await h.page.locator('#btnGames').tap();
+    const boxes = await h.page.locator('.tile:visible').evaluateAll(els => els.map(e => e.getBoundingClientRect().left));
+    assert.equal(boxes.length, 2);
+    assert.ok(boxes.every(x => Math.abs(x - boxes[0]) < 1), 'the two games are stacked');
     assert.ok(await noHorizontalScroll(h.page));
     await h.page.locator('#tileSquirrel').tap();
     await h.page.locator('#picker').waitFor({ state: 'hidden' });
@@ -182,7 +223,7 @@ for (const g of [{ key: 'grandma', tile: '#tileGrandma', name: 'Let Grandma Slee
     const h = await home();
     try {
       const p = h.page;
-      await p.locator(g.tile).click();
+      await choose(p, g.tile);
       await gameFrame(p).locator('#btnMode').waitFor();
       // let the first load finish (pictures included) so the reload below doesn't cut any downloads short
       await p.locator('#game').evaluate(f => f.contentDocument.readyState === 'complete' || new Promise(r => f.addEventListener('load', r, { once: true })));
@@ -203,7 +244,7 @@ for (const g of [{ key: 'grandma', tile: '#tileGrandma', name: 'Let Grandma Slee
       await p.locator('#picker').waitFor({ state: 'hidden' });
       assert.equal(await gameFrame(p).locator('#endCard').isVisible(), true, 'going back shows the end card again');
       await gameFrame(p).locator('#btnHome').click();
-      await p.locator('#tileSandbox').click();
+      await choose(p, '#tileSandbox');
       await p.locator('#picker').waitFor({ state: 'hidden' });
       assert.equal(await p.locator('#game').getAttribute('src'), 'sandbox.html?embed=1');
       assert.deepEqual(h.problems, []);

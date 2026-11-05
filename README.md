@@ -2,7 +2,7 @@
 
 Three small browser games for the Shema noise monitor (EPR400/402, H.J.G. Meyer), all on Jacaranda Street. Built phone-first.
 
-`index.html` plays the Shema intro, then shows a card to pick a game. Each game opens in the same page and has a switch button at the top to go back to the picker (it works on the explainer cards too), and the end card of each finished game has an "All games" button. Every game starts with its own explainer cards.
+`index.html` plays the Shema intro, then shows a card with the Sandbox first and an "Or try a fun game" button that turns the card to the two games. Each game opens in the same page and has a switch button at the top to go back to the picker (it works on the explainer cards too), and the end card of each finished game has an "All games" button. Every game starts with its own explainer cards.
 
 - **Let Grandma Sleep** (`grandma.html`): tap noises on the street so Shema catches them before they wake Grandma. Easy / Normal / Hard.
 - **Squirrel Run** (`squirrel.html`): a side-view runner, best with the phone sideways. Jump across roofs, trees and power lines without making enough noise for Shema to lock on. Falling or getting caught ends the run.
