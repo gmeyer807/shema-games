@@ -1,0 +1,12 @@
+{
+  "name": "shema-games-tests",
+  "private": true,
+  "type": "module",
+  "description": "Browser tests for the Shema games. Run from this folder: npm install, then npm test.",
+  "scripts": {
+    "test": "node --test --test-concurrency=2 --test-reporter=spec *.test.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.50.0"
+  }
+}

@@ -99,6 +99,8 @@
   .mode-btn { font-family: var(--sans); font-size: 14px; font-weight: 700; color: var(--text-0); padding: 6px 12px 6px 8px; }
   .mode-btn svg { color: var(--amber); width: 18px; height: 18px; }
   .mode-btn .short { display: none; }
+  /* the switch-game and sound buttons stay usable above the explainer and end cards */
+  .topbar .mode-btn, .topbar #btnSound { position: relative; z-index: 510; }   /* cards start below the top bar (.overlay padding) */
   .btn.primary { background: var(--amber); border-color: var(--amber); color: var(--bg-1); font-family: var(--sans); font-weight: 700; font-size: 16px; padding: 12px 22px; border-radius: 10px; }
   .btn.primary:hover { background: var(--amber-hi); }
 
@@ -111,7 +113,7 @@
   .night-bar > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--blue), var(--amber)); }
   .combo { color: var(--amber) !important; font-weight: 700; }
 
-  .overlay { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--bg-0) 55%, transparent); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  .overlay { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; padding: calc(50px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--bg-0) 55%, transparent); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
   .ocard { width: min(460px, 100%); background: var(--bg-1); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 40px var(--shadow); padding: 22px; display: flex; flex-direction: column; gap: 14px; max-height: 100%; overflow-y: auto; }
   .ocard h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
   .ocard h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
@@ -145,6 +147,7 @@
   .rules li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: start; color: var(--text-1); line-height: 1.45; }
   .rules .k { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--amber); border: 1px solid var(--amber); border-radius: 50%; width: 22px; height: 22px; display: grid; place-items: center; }
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  #btnHome svg { flex-shrink: 0; }
   .stars { font-size: 28px; letter-spacing: 4px; color: var(--amber); }
   .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .stat { background: var(--bg-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
@@ -335,7 +338,7 @@
           <div class="stat"><div class="v" id="stCaught">0</div><div class="l">caught</div></div>
           <div class="stat"><div class="v" id="stLoud">0</div><div class="l">loudest dB(A)</div></div>
         </div>
-        <div class="row"><button class="btn primary" id="btnAgain">Play again</button><button class="btn" id="btnLevel" type="button">Change difficulty</button><span class="best" id="bestTxt2"></span></div>
+        <div class="row"><button class="btn primary" id="btnAgain">Play again</button><button class="btn" id="btnLevel" type="button">Change difficulty</button><button class="btn" id="btnHome" type="button" title="Back to the game picker"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>All games</button><span class="best" id="bestTxt2"></span></div>
       </div>
     </div>
   </main>
@@ -379,7 +382,7 @@
 
   // NOISE SPRITES: a file name per noise: a horizontal strip of 6 square frames facing right
   // (or { src, frames, fps } for another count). Empty = the emoji is used.
-  const NOISE_ART = { dog: 'assets/dog.webp', cat: 'assets/cat.webp', squirrel: 'assets/squirrel.webp', owl: 'assets/owl.webp', taxi: 'assets/taxi.webp', boombox: '', vuvuzela: 'assets/vuvuzela.webp', drill: '', alarm: '', frog: 'assets/frog.webp', mosquito: 'assets/mosquito.webp', hadeda: 'assets/hadeda.webp', rooster: 'assets/rooster.webp' };
+  const NOISE_ART = { dog: 'assets/dog.webp', cat: 'assets/cat.webp', squirrel: 'assets/squirrel.webp', owl: 'assets/owl.webp', taxi: 'assets/taxi.webp', boombox: 'assets/boombox.webp', vuvuzela: 'assets/vuvuzela.webp', drill: 'assets/drill.webp', alarm: 'assets/alarm.webp', frog: 'assets/frog.webp', mosquito: 'assets/mosquito.webp', hadeda: 'assets/hadeda.webp', rooster: 'assets/rooster.webp' };
 
   // REAL SOUNDS: a file name per noise ('dog.mp3', '.ogg' or '.wav'), played on a loop and made quieter with distance.
   // Empty = the sound is synthesised in the browser.
@@ -767,7 +770,7 @@
     if (reduced) return;
     ctx.save(); ctx.lineWidth = 2;
     for (let i = waves.length - 1; i >= 0; i--) {
-      const w = waves[i], age = (now - w.t0) / 1400;
+      const w = waves[i], age = Math.max(0, (now - w.t0) / 1400);   // stamped after this frame began? not negative
       if (age > 1) { waves.splice(i, 1); continue; }
       ctx.strokeStyle = w.c; ctx.globalAlpha = 0.55 * (1 - age);
       ctx.beginPath(); ctx.arc(sx(w.x), sy(w.y), (2.5 + age * 12) * K, 0, Math.PI * 2); ctx.stroke();
@@ -821,7 +824,7 @@
   }
   function drawPops(now) {
     for (let i = G.pops.length - 1; i >= 0; i--) {
-      const p = G.pops[i], age = (now - p.t0) / 500;
+      const p = G.pops[i], age = Math.max(0, (now - p.t0) / 500);   // stamped after this frame began? not negative
       if (age > 1) { G.pops.splice(i, 1); continue; }
       ctx.save(); ctx.strokeStyle = T['cls-' + p.c]; ctx.globalAlpha = 1 - age; ctx.lineWidth = 3;
       for (let k = 0; k < 8; k++) {
@@ -833,7 +836,7 @@
   }
   function drawTaps(now) {
     for (let i = G.taps.length - 1; i >= 0; i--) {
-      const p = G.taps[i], age = (now - p.t0) / 350;
+      const p = G.taps[i], age = Math.max(0, (now - p.t0) / 350);   // stamped after this frame began? not negative
       if (age > 1) { G.taps.splice(i, 1); continue; }
       ctx.save(); ctx.strokeStyle = T['amber']; ctx.globalAlpha = 1 - age; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.arc(p.x, p.y, 10 + age * 26, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
@@ -841,7 +844,7 @@
   }
   function drawFloats(now) {
     for (let i = G.floats.length - 1; i >= 0; i--) {
-      const f = G.floats[i], age = (now - f.t0) / 1100;
+      const f = G.floats[i], age = Math.max(0, (now - f.t0) / 1100);   // stamped after this frame began? not negative
       if (age > 1) { G.floats.splice(i, 1); continue; }
       ctx.save(); ctx.globalAlpha = 1 - age * age;
       ctx.font = `700 ${Math.max(12, 1.9 * K)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1114,6 +1117,7 @@
   }
   $('btnNext').addEventListener('click', () => { if (slide === slides.length - 1) startGame(); else showSlide(slide + 1, 1); });
   $('btnBack').addEventListener('click', () => showSlide(slide - 1, -1));
+  $('btnHome').addEventListener('click', () => { if (SHELL) SHELL.openPicker(); else location.href = 'index.html'; });
   $('btnLevel').addEventListener('click', () => { $('endCard').hidden = true; $('startCard').hidden = false; showSlide(3, 1); });
   let swipeX = null;
   $('deck').addEventListener('pointerdown', e => { swipeX = e.clientX; });
@@ -1308,8 +1312,9 @@
   let paused = false;
   window.__shemaPause = p => { paused = p; if (ac && master) master.gain.setTargetAtTime(p || !G.sound ? 0 : 0.7, ac.currentTime, 0.05); };
   function frame(now) {
+    requestAnimationFrame(frame);   // first, so one bad frame can never stop the game
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
-    if (paused) { requestAnimationFrame(frame); return; }
+    if (paused) return;
     step(dt);
     G.shake = Math.max(0, G.shake - dt * 1.5);
     emitWaves(now);
@@ -1326,9 +1331,8 @@
     }
     updateAudio();
     if (now - lastUi > 100) { lastUi = now; updatePanel(); }
-    requestAnimationFrame(frame);
   }
-  if (location.hash === '#test') window.__g = { G, sx, sy, tapAt, startGame, inReach };
+  if (location.hash === '#test') window.__g = { G, sx, sy, tapAt, startGame, endGame, inReach, step, spawn, move, pattern, catchNoise, catchCost, available, hour, setDiff, NOISES, DIFF, NIGHT_S, RANGE, DEV, get D() { return D; } };
   resize(); readTokens();
   // a few noises wander about behind the start card, so the street looks alive
   G.mode = 'play'; for (let i = 0; i < 3; i++) spawn(); G.mode = 'start';

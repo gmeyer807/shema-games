@@ -98,6 +98,8 @@
   .mode-btn { font-family: var(--sans); font-size: 14px; font-weight: 700; color: var(--text-0); padding: 6px 12px 6px 8px; }
   .mode-btn svg { color: var(--amber); width: 18px; height: 18px; }
   .mode-btn .short { display: none; }
+  /* the switch-game and sound buttons stay usable above the explainer and end cards */
+  .topbar .mode-btn, .topbar #btnSound { position: relative; z-index: 510; }   /* cards start below the top bar (.overlay padding) */
 
   /* ---------- stage ---------- */
   .stage { grid-area: stage; display: flex; flex-direction: column; gap: 10px; min-height: 0; min-width: 0; }
@@ -192,7 +194,7 @@
   @keyframes slSub { to { opacity: 1; transform: none; } }
 
   /* ---------- explainer cards ---------- */
-  .overlay { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--bg-0) 55%, transparent); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  .overlay { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; padding: calc(50px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--bg-0) 55%, transparent); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
   .ocard { width: min(460px, 100%); background: var(--bg-1); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 40px var(--shadow); padding: 22px; display: flex; flex-direction: column; gap: 14px; max-height: 100%; overflow-y: auto; }
   .ocard h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
   .ocard h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
@@ -434,7 +436,7 @@
     rooster:  { name: 'Rooster',      icon: '🐓', cls: 'background',  c: 'alarm',       L10: 78, tonal: 0 },
     rain:     { name: 'Rain cloud',   icon: '🌧️', cls: 'weather',     c: 'weather',     L10: 0,  tonal: 0 },
   };
-  const NOISE_ART = { dog: 'assets/dog.webp', cat: 'assets/cat.webp', squirrel: 'assets/squirrel.webp', owl: 'assets/owl.webp', taxi: 'assets/taxi.webp', vuvuzela: 'assets/vuvuzela.webp', frog: 'assets/frog.webp', mosquito: 'assets/mosquito.webp', hadeda: 'assets/hadeda.webp', rooster: 'assets/rooster.webp' };
+  const NOISE_ART = { dog: 'assets/dog.webp', cat: 'assets/cat.webp', squirrel: 'assets/squirrel.webp', owl: 'assets/owl.webp', taxi: 'assets/taxi.webp', boombox: 'assets/boombox.webp', vuvuzela: 'assets/vuvuzela.webp', drill: 'assets/drill.webp', alarm: 'assets/alarm.webp', frog: 'assets/frog.webp', mosquito: 'assets/mosquito.webp', hadeda: 'assets/hadeda.webp', rooster: 'assets/rooster.webp' };
   const NOISE_SOUNDS = { dog: 'assets/dog.mp3', cat: 'assets/cat.mp3', squirrel: 'assets/squirrel.mp3', owl: 'assets/owl.mp3', taxi: 'assets/taxi.mp3', boombox: 'assets/boombox.mp3', vuvuzela: 'assets/vuvuzela.mp3', hadeda: 'assets/hadeda.mp3', drill: 'assets/drill.mp3', alarm: 'assets/alarm.mp3', frog: 'assets/frog.mp3', mosquito: 'assets/mosquito.mp3', rooster: 'assets/rooster.mp3' };
   const CALLS = new Set(['dog', 'cat', 'squirrel', 'owl', 'taxi', 'rooster', 'hadeda']);   // played once each time the noise starts; the rest loop
   // download the recordings as the page opens, so they are ready to decode on the first tap
@@ -444,7 +446,7 @@
 
   const state = {
     night: false, clock: 14 * 3600, sources: [], nextId: 1,
-    ambient: 45, las: 45, lasE: Math.pow(10, 4.5),
+    ambient: 45, ambE: Math.pow(10, 4.5), las: 45, lasE: Math.pow(10, 4.5),
     det: { open: false, quiet: 0, ev: null },
     events: [], loud: null, sound: soundPref(),
   };
@@ -488,9 +490,14 @@
     simT += dt;
     state.clock = (state.clock + dt) % 86400;
     const raining = state.sources.some(s => s.type === 'rain');
-    state.ambient = raining ? e2db(db2e(baseAmbient()) + db2e(RAIN_dBA)) : baseAmbient();
+    const ambTarget = raining ? e2db(db2e(baseAmbient()) + db2e(RAIN_dBA)) : baseAmbient();
     const a = 1 - Math.exp(-dt / 1.0);               // S time weighting, tau = 1 s
-    let total = db2e(state.ambient);
+    // Shema's ambient estimate follows the background with the same time weighting as the level itself, so
+    // when the background changes (rain stops, day turns to night) the gap between them stays the noise
+    // sources alone, and the change is not mistaken for a disturbance
+    state.ambE = state.ambE + (db2e(ambTarget) - state.ambE) * Math.min(1, a * 1.5);
+    state.ambient = e2db(state.ambE);
+    let total = db2e(ambTarget);
     let best = null;
     for (const s of state.sources) {
       if (s.type === 'rain') continue;
@@ -739,7 +746,7 @@
     if (reduced) return;
     ctx.save(); ctx.lineWidth = 2;
     for (let i = waves.length - 1; i >= 0; i--) {
-      const w = waves[i], age = (now - w.t0) / 1600;
+      const w = waves[i], age = Math.max(0, (now - w.t0) / 1600);   // stamped after this frame began? not negative
       if (age > 1) { waves.splice(i, 1); continue; }
       ctx.strokeStyle = w.c; ctx.globalAlpha = 0.55 * (1 - age);
       ctx.beginPath(); ctx.arc(sx(w.x), sy(w.y), (3 + age * 16) * K, 0, Math.PI * 2); ctx.stroke();
@@ -1174,24 +1181,25 @@
   let paused = false;
   window.__shemaPause = p => { paused = p; if (ac && master) master.gain.setTargetAtTime(p || !state.sound ? 0 : 0.7, ac.currentTime, 0.05); };
   function frame(now) {
+    requestAnimationFrame(frame);   // first, so one bad frame can never stop the game
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
-    if (paused) { requestAnimationFrame(frame); return; }
+    if (paused) return;
     step(dt);
     emitWaves(now);
     if (cw > 0) drawScene(now);
     updateAudio();
     if (now - lastUi > 100) { lastUi = now; updatePanel(); }
-    requestAnimationFrame(frame);
   }
   resize();
   // a working street to start with: a dog barking across the road
-  addSource('dog', 40, 22);
+  addSource('dog', 40, 30);
   soundUi();
   // sound is on by default; browsers only let it start after a tap, so unlock it on the first one
   if (state.sound && SHELL) ensureAudio();
   const unlock = () => { if (state.sound) ensureAudio(); };
   window.addEventListener('pointerdown', unlock, { once: true, capture: true });
   window.addEventListener('keydown', unlock, { once: true, capture: true });
+  if (location.hash === '#test') window.__s = { state, step, addSource, removeSource, setNight, currentReading, judge, freeSpot, geom, TYPES, MAX_SOURCES, RANGE, DEV, sx, sy };
   requestAnimationFrame(frame);
 
   // ================= opening sequence (same as the Shema app) =================

@@ -107,6 +107,8 @@
   .mode-btn { font-family: var(--sans); font-size: 14px; font-weight: 700; color: var(--text-0); padding: 6px 12px 6px 8px; }
   .mode-btn svg { color: var(--amber); width: 18px; height: 18px; }
   .mode-btn .short { display: none; }
+  /* the switch-game and sound buttons stay usable above the explainer and end cards */
+  .topbar .mode-btn, .topbar #btnSound { position: relative; z-index: 510; }   /* cards start below the top bar (.overlay padding) */
   .btn.primary { background: var(--amber); border-color: var(--amber); color: var(--bg-1); font-family: var(--sans); font-weight: 700; font-size: 16px; padding: 12px 22px; border-radius: 10px; }
   .btn.primary:hover { background: var(--amber-hi); }
 
@@ -119,7 +121,7 @@
   .night-bar > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--blue), var(--amber)); }
   .combo { color: var(--amber) !important; font-weight: 700; }
 
-  .overlay { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--bg-0) 55%, transparent); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  .overlay { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; padding: calc(50px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--bg-0) 55%, transparent); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
   .ocard { width: min(460px, 100%); background: var(--bg-1); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 40px var(--shadow); padding: 22px; display: flex; flex-direction: column; gap: 14px; max-height: 100%; overflow-y: auto; }
   .ocard h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
   .ocard h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
@@ -153,6 +155,7 @@
   .rules li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: start; color: var(--text-1); line-height: 1.45; }
   .rules .k { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--amber); border: 1px solid var(--amber); border-radius: 50%; width: 22px; height: 22px; display: grid; place-items: center; }
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  #btnHome svg { flex-shrink: 0; }
   .stars { font-size: 28px; letter-spacing: 4px; color: var(--amber); }
   .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .stat { background: var(--bg-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
@@ -352,7 +355,7 @@
           <div class="stat"><div class="v" id="stAcorns">0</div><div class="l">acorns</div></div>
           <div class="stat"><div class="v" id="stLoud">0</div><div class="l">loudest dB(A)</div></div>
         </div>
-        <div class="row"><button class="btn primary" id="btnAgain" type="button">Run again</button><button class="btn" id="btnHow" type="button">How to play</button><span class="best" id="bestTxt"></span></div>
+        <div class="row"><button class="btn primary" id="btnAgain" type="button">Run again</button><button class="btn" id="btnHow" type="button">How to play</button><button class="btn" id="btnHome" type="button" title="Back to the game picker"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>All games</button><span class="best" id="bestTxt"></span></div>
       </div>
     </div>
   </main>
@@ -412,6 +415,8 @@
   }
   // seconds in the air for a plain jump that lands dh units higher (negative = lower)
   function airtime(dh) { const d = JUMP * JUMP - 2 * GRAV * dh; return d < 0 ? 0 : (JUMP + Math.sqrt(d)) / GRAV; }
+  // seconds a plain jump takes to rise dh units (Infinity if it never gets that high)
+  function riseTime(dh) { const d = JUMP * JUMP - 2 * GRAV * dh; return d < 0 ? Infinity : (JUMP - Math.sqrt(d)) / GRAV; }
 
   // FAIRNESS: every gap is at most ~70 % of what a plain jump (no hold, no second hop) covers at today's speed,
   // a step up is never higher than a plain jump can reach, and nothing hostile sits right at an edge.
@@ -432,10 +437,17 @@
       } else {
         // LEVEL or HIGHER: a plain jump (no hold, no second hop) always clears it
         const reach = S * airtime(dh);
-        const maxGap = Math.max(60, reach * (0.55 + 0.2 * prog) - 2 * HALF);
-        gap = rnd(Math.min(50, maxGap * 0.6), maxGap);
+        // ...and not so short that a jump from the very edge is still below the next roof when it gets
+        // to the wall (it would get stuck against the wall and slide down): the gap must be at least
+        // as far as the squirrel runs while it rises to the roof's height, plus its own width
+        const minGap = dh > 0 ? S * riseTime(dh + 12) + 2 * HALF + 6 : 0;
+        const maxGap = Math.max(60, minGap + 12, reach * (0.55 + 0.2 * prog) - 2 * HALF);
+        gap = rnd(Math.max(minGap, Math.min(50, maxGap * 0.6)), maxGap);
       }
-      const width = kind === 'roof' ? rnd(240, 520) : kind === 'tin' ? rnd(220, 380) : kind === 'tree' ? rnd(150, 240) : rnd(200, 320);
+      let width = kind === 'roof' ? rnd(240, 520) : kind === 'tin' ? rnd(220, 380) : kind === 'tree' ? rnd(150, 240) : rnd(200, 320);
+      // a plain jump from the very edge must not sail right over it (at full speed a jump covers ~210 units),
+      // or the squirrel lands on the far lip and drops straight off
+      if (dh >= -20) width = Math.max(width, S * airtime(dh) - gap + 2 * HALF + 24);
       const x = w.genX + gap;
       const pl = addPlat(w, kind, x, width, y);
       // acorns: a little arc over the gap, or a row along the platform
@@ -786,7 +798,7 @@
     }
     // dB pop-ups at landings
     for (let i = w.pops.length - 1; i >= 0; i--) {
-      const f = w.pops[i], age = (now - f.t0) / 1000;
+      const f = w.pops[i], age = Math.max(0, (now - f.t0) / 1000);   // stamped after this frame began? not negative
       if (age > 1) { w.pops.splice(i, 1); continue; }
       c.globalAlpha = 1 - age * age; c.font = `800 ${Math.max(11, 15 * K)}px ${MONO}`; c.textAlign = 'center'; c.textBaseline = 'middle';
       const tx = X(f.x), ty = Y(f.y) - age * 30 * K;
@@ -838,6 +850,7 @@
     setTimeout(() => { $('endCard').hidden = false; $('btnAgain').focus({ preventScroll: true }); }, why === 'caught' ? 700 : 500);
   }
   $('btnAgain').addEventListener('click', start);
+  $('btnHome').addEventListener('click', () => { if (SHELL) SHELL.openPicker(); else location.href = 'index.html'; });
   $('btnHow').addEventListener('click', () => { $('endCard').hidden = true; $('startCard').hidden = false; showSlide(0, 1); });
 
   // input: anywhere on the street or the bottom panel is the jump button
@@ -1042,6 +1055,7 @@
   // behind the start card the street scrolls by on its own
   const attract = newWorld(); attract.demo = { speed: 200 };
   function frame(now) {
+    requestAnimationFrame(frame);   // first, so one bad frame can never stop the game
     const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
     if (!paused) {
       if (mode === 'play' || mode === 'over') step(W, dt, view.VW);
@@ -1061,11 +1075,10 @@
       drawWorld(view, mode === 'start' ? attract : W, now);
     }
     if (now - lastUi > 80) { lastUi = now; updatePanel(); }
-    requestAnimationFrame(frame);
   }
   readTokens(); resize();
   showSlide(0, 1);
-  if (location.hash === '#test') window.__r = { get W() { return W; }, start, press: () => press(W), release: () => release(W), step: (dt) => step(W, dt, view.VW), threshold, airtime, speedAt, generate, newWorld };
+  if (location.hash === '#test') window.__r = { get W() { return W; }, start, press: () => press(W), release: () => release(W), step: (dt) => step(W, dt, view.VW), threshold, airtime, speedAt, generate, newWorld, end, ambient, SURF, H, HALF, JUMP, GRAV, get mode() { return mode; }, get view() { return view; }, get attract() { return attract; }, get best() { return best; } };
   requestAnimationFrame(frame);
 
   // ================= opening sequence (same as the Shema app) =================
