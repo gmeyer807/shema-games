@@ -640,6 +640,90 @@
   for (const [k, v] of Object.entries({ run: 'assets/squirrel_run.webp', jump: 'assets/squirrel_jump.webp', squirrel: 'assets/squirrel.webp', cat: 'assets/cat.webp', hadeda: 'assets/hadeda.webp', taxi: 'assets/taxi.webp', owl: 'assets/owl.webp' })) {
     const im = new Image(); im.onload = () => { SPR[k] = { img: im, frames: 6 }; }; im.src = v;
   }
+  // scenery art: each drawing falls back to the simple shapes below until its file has loaded
+  const ART = {};
+  for (const k of ['bg_sky', 'bg_far', 'bg_mid', 'roof_tile', 'roof_tin', 'roof_flat', 'trees', 'roof_props', 'street_props', 'pickups']) {
+    const im = new Image(); im.onload = () => { ART[k] = im; }; im.src = `assets/${k}.webp`;
+  }
+  // where each piece sits in its sheet (source pixels): roofs are [x, width, ridge start/end]; trees [x, width, canopy bottom]
+  const AM = {"tile": {"h": 209, "L": [0, 408, 86], "M": [412, 268], "R": [684, 404, 318], "wall": "#4f7083"}, "tin": {"h": 193, "L": [0, 411, 80], "M": [415, 265], "R": [684, 389, 309], "wall": "#4c6c7f"}, "flat": {"h": 169, "L": [0, 403, 1], "M": [407, 292], "R": [703, 385, 305], "wall": "#4c6d80"}, "props": [[0, 70, 407], [76, 99, 357], [181, 123, 367], [310, 110, 415], [426, 190, 252], [622, 155, 204]], "street": [[0, 182], [188, 56], [250, 81]], "pick": [[0, 109], [117, 128]], "trees": [[0, 298, 236], [306, 296, 237], [610, 274, 234], [892, 273, 236]]};
+  function piece(c, im, sx, sw, sy, sh, dx, dy, dw, dh, flip) {
+    if (dw <= 0 || dh <= 0) return;
+    if (!flip) { c.drawImage(im, sx, sy, sw, sh, dx, dy, dw, dh); return; }
+    c.save(); c.translate(dx + dw, dy); c.scale(-1, 1); c.drawImage(im, sx, sy, sw, sh, 0, 0, dw, dh); c.restore();
+  }
+  // a wide layer that repeats sideways; every second copy is mirrored so the joins always match
+  function band(c, im, offset, dy, dh, cw) {
+    const dw = im.width * dh / im.height, i0 = Math.floor(offset / dw);
+    for (let i = i0; (i - i0) * dw - (offset - i0 * dw) < cw + dw; i++) {
+      const x = i * dw - offset;
+      if (x > cw || x + dw < 0) continue;
+      piece(c, im, 0, im.width, 0, im.height, Math.floor(x), dy, Math.ceil(dw) + 1, dh, i % 2 !== 0);
+    }
+  }
+  const ROOF_SC = 0.5;    // world units per source pixel of the roof art
+  function roofArt(q) { return q.kind === 'tin' ? 'tin' : q.id % 3 === 2 ? 'flat' : 'tile'; }
+  function drawRoof(c, q, X, Y, K) {
+    const kind = roofArt(q), im = ART['roof_' + kind], m = AM[kind]; if (!im) return false;
+    const sc = ROOF_SC * K, top = Y(q.y) - 2 * K, h = m.h * sc, road = Y(H - 22);
+    const xa = X(q.x), xb = X(q.x + q.w), midx = (xa + xb) / 2;
+    c.save(); c.beginPath(); c.rect(-10, -10, 1e5, road + 10); c.clip();
+    // the wall carries on below the drawing, down to the road
+    c.fillStyle = m.wall; c.fillRect(xa - 30 * sc, top + h - 2, xb - xa + 60 * sc, road - top - h + 4);
+    c.fillStyle = 'rgba(10,14,30,0.35)'; c.fillRect(xa - 30 * sc, top + h - 2, xb - xa + 60 * sc, road - top - h + 4);
+    c.fillStyle = T['rn-win'];
+    for (let r = 0; r < 2; r++) for (let k = 0; k < Math.floor(q.w / 110); k++) {
+      const wy = top + h + (14 + r * 46) * K; if (wy + 20 * K > road - 4 * K) continue;
+      if (hash(q.id * 31 + r * 7 + k) > 0.55) c.fillRect(xa + (40 + k * 110) * K, wy, 16 * K, 20 * K);
+    }
+    // left end up to the middle of the roof, right end from the middle; repeating middle in between
+    const lEnd = xa + (m.L[1] - m.L[2]) * sc, rStart = xb - m.R[2] * sc;
+    c.save(); c.beginPath(); c.rect(-10, -10, Math.min(lEnd, midx + 1) + 10, 1e5); c.clip();
+    piece(c, im, m.L[0], m.L[1], 0, m.h, xa - m.L[2] * sc, top, m.L[1] * sc, h); c.restore();
+    if (rStart > lEnd) {
+      const tw = m.M[1] * sc;
+      c.save(); c.beginPath(); c.rect(lEnd - 1, -10, rStart - lEnd + 2, 1e5); c.clip();
+      for (let x = lEnd - 1; x < rStart; x += tw - 1) piece(c, im, m.M[0], m.M[1], 0, m.h, x, top, tw, h);
+      c.restore();
+    }
+    c.save(); c.beginPath(); c.rect(Math.max(rStart, midx - 1), -10, 1e5, 1e5); c.clip();
+    piece(c, im, m.R[0], m.R[1], 0, m.h, rStart, top, m.R[1] * sc, h); c.restore();
+    c.restore(); return true;
+  }
+  // one rooftop prop (chimney, dish, tank...) behind the ridge on some longer roofs, away from where cats sit
+  function drawRoofProp(c, q, X, Y, K) {
+    const im = ART.roof_props; if (!im || q.w < 280 || hash(q.id * 5 + 1) < 0.4) return;
+    const k = Math.floor(hash(q.id * 3 + 2) * AM.props.length), [sx, sw] = AM.props[k];
+    const hh = (k === 5 ? 26 : k === 4 ? 30 : 46) * K, ww = sw * hh / im.height;
+    const at = q.x + q.w * (hash(q.id + 9) < 0.5 ? 0.22 : 0.82);
+    piece(c, im, sx, sw, 0, im.height, X(at) - ww / 2, Y(q.y + 8) - hh, ww, hh, hash(q.id + 4) < 0.5);
+  }
+  function treeArt(q) { const big = q.w > 195; return q.hue % 2 ? (big ? 0 : 1) : (big ? 2 : 3); }
+  function treeBox(q, X, Y, K) {
+    const im = ART.trees, [sx, sw, cut] = AM.trees[treeArt(q)];
+    const dw = (q.w * 1.18) * K, s = dw / sw, ch = cut * s * 0.56;   // jacarandas are wide, flat-topped trees
+    return { im, sx, sw, cut, s, dw, ch, x: (X(q.x) + X(q.x + q.w)) / 2 - dw / 2, top: Y(q.y) - 10 * K };
+  }
+  function drawTree(c, q, X, Y, K, front) {
+    if (!ART.trees) return false;
+    const b = treeBox(q, X, Y, K), road = Y(H - 22);
+    if (front) {
+      // the canopy again in front of the squirrel, from just below the top, so a squirrel inside the leaves is hidden
+      c.save(); c.beginPath(); c.rect(b.x - 10, Y(q.y + 10), b.dw + 20, Math.max(0, road - Y(q.y + 10))); c.clip(); c.globalAlpha = 0.9;
+      piece(c, b.im, b.sx, b.sw, 0, b.cut, b.x, b.top, b.dw, b.ch); c.restore(); return true;
+    }
+    c.save(); c.beginPath(); c.rect(-10, -10, 1e5, road + 10); c.clip();
+    const tTop = b.top + b.ch - 24 * K;
+    if (tTop < road) piece(c, b.im, b.sx, b.sw, b.cut - 30, b.im.height - b.cut + 30, b.x, tTop, b.dw, road - tTop + 6 * K);
+    piece(c, b.im, b.sx, b.sw, 0, b.cut, b.x, b.top, b.dw, b.ch);
+    c.restore(); return true;
+  }
+  function drawPole(c, x, q, Y, K, flip) {
+    const im = ART.street_props; if (!im) return false;
+    const [sx, sw] = AM.street[0], arm = 0.14, road = Y(H - 22), armY = Y(q.y - 14);
+    const hh = (road - armY) / (1 - arm), ww = sw * hh / im.height;
+    piece(c, im, sx, sw, 0, im.height, x - ww / 2, armY - arm * hh, ww, hh + 2, flip); return true;
+  }
   function sprite(c, k, frame, x, y, size, flip) {
     const s = SPR[k]; if (!s) return false;
     const fw = s.img.width / s.frames, hh = size * s.img.height / fw;
@@ -659,13 +743,23 @@
     // sky
     const g = c.createLinearGradient(0, 0, 0, v.ch); g.addColorStop(0, T['rn-sky-a']); g.addColorStop(1, T['rn-sky-b']);
     c.fillStyle = g; c.fillRect(0, 0, v.cw, v.ch);
-    // stars + moon (fixed)
+    if (ART.bg_sky) {
+      // the painted sky fills the view, its lower edge (the city glow) behind the street
+      const im = ART.bg_sky, s = Math.max(v.cw / im.width, (Y(H - 60)) / im.height), dw = im.width * s, dh = im.height * s;
+      c.drawImage(im, (v.cw - dw) / 2, Y(H - 60) - dh, dw, dh);
+    } else {
     c.fillStyle = T['rn-star'];
     for (let i = 0; i < 40; i++) { const sx = hash(i) * v.cw, sy = hash(i + 50) * (Y(150)); c.globalAlpha = 0.3 + 0.5 * hash(i + 9); c.fillRect(sx, sy, 2, 2); }
     c.globalAlpha = 1;
     const mx = v.cw * 0.78, my = Math.max(28 * K, Y(40)), mr = 22 * K;
     c.fillStyle = T['rn-moon']; c.beginPath(); c.arc(mx, my, mr, 0, Math.PI * 2); c.fill();
     c.fillStyle = T['rn-sky-a']; c.globalAlpha = 0.9; c.beginPath(); c.arc(mx + mr * 0.45, my - mr * 0.25, mr * 0.9, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
+    }
+    if (ART.bg_far && ART.bg_mid) {
+      // painted layers: the city far away barely moves, the street behind the roofs moves at about half speed
+      band(c, ART.bg_far, cam * 0.1 * K, Y(H - 228), 140 * K, v.cw);
+      band(c, ART.bg_mid, cam * 0.4 * K, Y(H - 22) - 146 * K, 148 * K, v.cw);
+    } else {
     // far skyline (slow parallax)
     const par = 0.25, step = 70;
     const f0 = Math.floor(cam * par / step) - 1;
@@ -675,6 +769,7 @@
       c.fillStyle = T['rn-far-win'];
       for (let r = 0; r < 4; r++) if (hash(i * 7 + r) > 0.55) c.fillRect(bx + bw * 0.3, Y(H - 30 - bh + 18 + r * 22), 5 * K, 7 * K);
     }
+    }
     // road + taxi
     c.fillStyle = T['rn-road']; c.fillRect(0, Y(H - 22), v.cw, v.ch - Y(H - 22));
     c.strokeStyle = T['rn-road-line']; c.lineWidth = 2 * K; c.setLineDash([16 * K, 14 * K]); c.lineDashOffset = cam * K;
@@ -683,8 +778,12 @@
     // platforms
     for (const q of w.plats) {
       const x0 = X(q.x), x1 = X(q.x + q.w);
-      if (x1 < -40 || x0 > v.cw + 40) continue;
-      if (q.kind === 'roof' || q.kind === 'tin') {
+      if (x1 < -220 || x0 > v.cw + 220) continue;
+      if ((q.kind === 'roof' || q.kind === 'tin') && ART['roof_' + roofArt(q)]) {
+        drawRoofProp(c, q, X, Y, K); drawRoof(c, q, X, Y, K);
+      } else if (q.kind === 'tree' && ART.trees) {
+        drawTree(c, q, X, Y, K, false);
+      } else if (q.kind === 'roof' || q.kind === 'tin') {
         c.fillStyle = q.hue % 2 ? T['rn-wall'] : T['rn-wall-2']; c.fillRect(x0 + 6 * K, Y(q.y + 10), x1 - x0 - 12 * K, Y(H - 22) - Y(q.y + 10));
         // lit windows
         c.fillStyle = T['rn-win'];
@@ -701,6 +800,12 @@
         c.fillStyle = T['rn-trunk']; c.fillRect(cx - 9 * K, Y(q.y + 20), 18 * K, Y(H - 22) - Y(q.y + 20));
         c.fillRect(x0 + 8 * K, Y(q.y + 30), x1 - x0 - 16 * K, 7 * K);
       } else if (q.kind === 'wire') {
+        if (drawPole(c, x0, q, Y, K, false) && drawPole(c, x1, q, Y, K, true)) {
+          c.strokeStyle = T['rn-wire']; c.lineWidth = 2.5 * K;
+          c.beginPath(); c.moveTo(x0, Y(q.y)); c.quadraticCurveTo((x0 + x1) / 2, Y(q.y + 6), x1, Y(q.y)); c.stroke();
+          c.globalAlpha = 0.6; c.beginPath(); c.moveTo(x0, Y(q.y - 12)); c.quadraticCurveTo((x0 + x1) / 2, Y(q.y - 4), x1, Y(q.y - 12)); c.stroke(); c.globalAlpha = 1;
+          continue;
+        }
         c.fillStyle = T['rn-pole'];
         c.fillRect(x0 - 3 * K, Y(q.y - 18), 6 * K, Y(H - 22) - Y(q.y - 18)); c.fillRect(x1 - 3 * K, Y(q.y - 18), 6 * K, Y(H - 22) - Y(q.y - 18));
         c.fillRect(x0 - 12 * K, Y(q.y - 16), 24 * K, 4 * K); c.fillRect(x1 - 12 * K, Y(q.y - 16), 24 * K, 4 * K);
@@ -715,7 +820,15 @@
     for (const it of w.items) {
       if (it.gone) continue;
       const x = X(it.x), y = Y(it.y); if (x < -40 || x > v.cw + 40) continue;
-      if (it.type === 'acorn') {
+      if (it.type === 'acorn' && ART.pickups) {
+        const bob = Math.sin(now / 300 + it.x) * 2 * K, [sx, sw] = AM.pick[0], hh = 19 * K, ww = sw * hh / ART.pickups.height;
+        piece(c, ART.pickups, sx, sw, 0, ART.pickups.height, x - ww / 2, y - 10 * K + bob, ww, hh);
+      } else if (it.type === 'paws' && ART.pickups) {
+        const pul = 1 + Math.sin(now / 200) * 0.08, [sx, sw] = AM.pick[1], d = 30 * K;
+        const gl = c.createRadialGradient(x, y, 6 * K, x, y, 26 * K * pul); gl.addColorStop(0, T['amber']); gl.addColorStop(1, 'rgba(0,0,0,0)');
+        c.fillStyle = gl; c.globalAlpha = 0.55; c.beginPath(); c.arc(x, y, 26 * K * pul, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
+        piece(c, ART.pickups, sx, sw, 0, ART.pickups.height, x - d / 2, y - d / 2, d, d);
+      } else if (it.type === 'acorn') {
         const bob = Math.sin(now / 300 + it.x) * 2 * K;
         c.fillStyle = T['rn-acorn']; c.beginPath(); c.ellipse(x, y + 3 * K + bob, 6 * K, 7.5 * K, 0, 0, Math.PI * 2); c.fill();
         c.fillStyle = T['rn-cap']; c.beginPath(); c.ellipse(x, y - 3 * K + bob, 7.5 * K, 4 * K, 0, Math.PI, 0); c.fill(); c.fillRect(x - 1 * K, y - 9 * K + bob, 2 * K, 4 * K);
@@ -748,7 +861,8 @@
     // tree canopies are drawn in front, so the squirrel can hide in them
     for (const q of w.plats) {
       if (q.kind !== 'tree') continue;
-      const x0 = X(q.x), x1 = X(q.x + q.w); if (x1 < -60 || x0 > v.cw + 60) continue;
+      const x0 = X(q.x), x1 = X(q.x + q.w); if (x1 < -120 || x0 > v.cw + 120) continue;
+      if (drawTree(c, q, X, Y, K, true)) continue;
       // a band of leafy blobs along the branch: its top is where the squirrel runs
       const leaf = q.hue % 2 ? T['rn-jac'] : T['rn-leaf'];
       c.fillStyle = leaf; c.globalAlpha = 0.88;
