@@ -8,6 +8,8 @@ Three small browser games for the Shema noise monitor (EPR400/402, H.J.G. Meyer)
 - **Squirrel Run** (`squirrel.html`): a side-view runner, best with the phone sideways. Jump across roofs, trees and power lines without making enough noise for Shema to lock on. Falling or getting caught ends the run.
 - **Sandbox** (`sandbox.html`): drag noises onto the street and watch Shema measure, locate, classify and judge them (simplified SANS 10103 rules).
 
+Tap the Shema logo (on the home screen or in any game's top bar) to find a hidden page about what the word Shema means (`shema-egg.js`).
+
 Sound is on by default (it starts on the first tap). No build step, no sign-in, nothing stored online. Best scores, difficulty and the sound setting are kept in the player's own browser (`localStorage`).
 
 ## Run locally
