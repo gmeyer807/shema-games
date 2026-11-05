@@ -72,7 +72,7 @@ static float doa_result[8];
 static float frame_audio[2u * CLASSIFIER_MEL_HOP];
 static float block[CLASSIFIER_MEL_HOP];
 static float columns[CLASSIFIER_MEL_FRAMES * CLASSIFIER_MEL_BANDS];
-static uint32_t column_head, frames;
+static uint32_t column_head, frames, window_fill; // window_fill: columns of the window being filled
 static bool warm_up = true;
 
 EXPORT("engine_init") int32_t engine_init(void)
@@ -84,7 +84,7 @@ EXPORT("engine_init") int32_t engine_init(void)
 	ClassifierMel_DecimatorReset();
 	net_status = (mel && net) ? 0 : (mel ? ClassifierNet_Status() : -2);
 	memset(columns, 0, sizeof(columns));
-	column_head = frames = 0u;
+	column_head = frames = window_fill = 0u;
 	warm_up = true;
 	preroll_head = preroll_count = buffer_count = 0u;
 	doa_open = false;
@@ -113,7 +113,8 @@ static void classifier_add(void)
 	memcpy(&frame_audio[CLASSIFIER_MEL_HOP], block, sizeof(block));
 	ClassifierMel_Column(frame_audio, &columns[column_head * CLASSIFIER_MEL_BANDS]);
 	column_head = (column_head + 1u) % CLASSIFIER_MEL_FRAMES;
-	if (++frames % CLASSIFIER_MEL_FRAMES == 0u) classify_window(); // a full window, no overlap
+	frames++;
+	if (++window_fill == CLASSIFIER_MEL_FRAMES) { window_fill = 0u; classify_window(); } // a full window, no overlap
 }
 
 /* doa.c: weight = how far the buffer is over the quietest one of the detection, minus 6 dB */
@@ -148,6 +149,9 @@ EXPORT("engine_process") int32_t engine_process(int32_t detection)
 		DoaSrpGeometry_t g = { .count = mics.count };
 		for (uint32_t m = 0u; m < mics.count; m++) { g.x_m[m] = mics.x_mm[m] / 1000.0f; g.y_m[m] = mics.y_mm[m] / 1000.0f; }
 		doa_open = DoaSrp_Begin(&g);
+		// classifier.c: the detection's windows start at its first buffer, the 1 s pre-roll included, so the
+		// first window holds the onset. The column ring already has the pre-roll's columns.
+		window_fill = (frames < ENGINE_PREROLL_BUFFERS) ? frames : ENGINE_PREROLL_BUFFERS;
 		doa_position = doa_points = 0u;
 		noise_set = false;
 		memset(doa_result, 0, sizeof(doa_result));
