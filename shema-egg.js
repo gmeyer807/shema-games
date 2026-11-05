@@ -11,7 +11,7 @@
   .shema-logo.egg-hot { cursor: pointer; border-radius: 6px; transition: transform .15s ease; }
   .shema-logo.egg-hot:hover { transform: scale(1.04); }
   .shema-logo.egg-hot:active { transform: scale(.97); }
-  /* every 8 s a soft amber glow pulses through the logo to invite a tap; stops once the egg is found */
+  /* every 8 s a soft amber glow pulses through the logo to invite a tap */
   .shema-logo.egg-hot.egg-tease { animation: eggTease 8s ease-in-out 2s infinite; }
   .shema-logo.egg-hot.egg-tease:hover { animation: none; filter: drop-shadow(0 0 6px var(--amber)); }
   @keyframes eggTease {
@@ -89,8 +89,6 @@
     box.hidden = false; box.scrollTop = 0;
     window.addEventListener('keydown', onKey, true);
     box.querySelector('.egg-go').focus({ preventScroll: true });
-    try { localStorage.setItem('shema.egg', '1'); } catch (e) { }
-    logo.classList.remove('egg-tease');
   }
   function close() {
     if (box.hidden) return;
@@ -105,9 +103,7 @@
   // taps on the card must not fall through to the game
   for (const t of ['pointerdown', 'pointerup', 'touchstart']) box.addEventListener(t, e => e.stopPropagation());
 
-  logo.classList.add('egg-hot');
-  let found = false; try { found = localStorage.getItem('shema.egg') === '1'; } catch (e) { }
-  if (!found) logo.classList.add('egg-tease');
+  logo.classList.add('egg-hot', 'egg-tease');
   logo.setAttribute('tabindex', '0');
   logo.setAttribute('role', 'button');
   logo.setAttribute('aria-label', 'SHEMA — what does it mean?');
