@@ -66,7 +66,7 @@
     <h3>So here is something worth hearing</h3>
     <p class="egg-gospel">The Gospel is the good news of Jesus. That He came and lived the life I should have lived (free from sin) and died the death I should have died (because of sin). So that through Him and His sacrifice I can enter God’s presence — blameless, made new and transformed.</p>
     <p class="egg-foot">“Faith comes by hearing, and hearing by the word of Christ.” · Romans 10:17</p>
-    <button class="egg-go" type="button">Amen</button>
+    <button class="egg-go" type="button">Close</button>
   </div>`;
   document.body.appendChild(box);
 
