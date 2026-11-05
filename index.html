@@ -238,6 +238,7 @@
   <div class="intro-sub">NOISE EVENT MONITOR</div>
   <div class="intro-skip">tap to skip</div>
 </div>
+<script src="ios-audio.js"></script>
 <script>document.body.classList.add('intro-on');</script>
 
 <div class="picker" id="picker">
@@ -340,7 +341,7 @@
   // One audio context for the whole app, made on the tap that picks a game so the browser lets it play.
   function context() {
     if (!ac) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; ac = new AC(); }
-    if (ac.state === 'suspended') ac.resume();
+    ShemaAudio.wake(ac);
     return ac;
   }
   window.ShemaShell = {

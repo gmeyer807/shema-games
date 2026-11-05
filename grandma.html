@@ -259,6 +259,7 @@
   <div class="intro-sub">NOISE EVENT MONITOR</div>
   <div class="intro-skip">tap to skip</div>
 </div>
+<script src="ios-audio.js"></script>
 <script>document.body.classList.add('intro-on');</script>
 
 <div class="app">
@@ -1190,7 +1191,7 @@
   }
   $('btnAgain').addEventListener('click', startGame);
   cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(); tapAt(e.clientX - r.left, e.clientY - r.top); });
-  document.addEventListener('visibilitychange', () => { if (document.hidden && ac) ac.suspend(); else if (!document.hidden && ac && G.sound) ac.resume(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && ac) ac.suspend(); else if (!document.hidden && ac && G.sound) ShemaAudio.wake(ac); });
 
   // ---- sound (off by default; everything is synthesised) ----
   let ac = null, master = null, noiseBuf = null;
@@ -1221,7 +1222,7 @@
       noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
       const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     }
-    if (ac.state === 'suspended') ac.resume();
+    ShemaAudio.wake(ac);
     loadSounds();
     return true;
   }
@@ -1315,9 +1316,8 @@
   soundUi();
   // sound is on by default; browsers only let it start after a tap, so unlock it on the first one
   if (G.sound && SHELL) ensureAudio();
-  const unlock = () => { if (G.sound) ensureAudio(); };
-  window.addEventListener('pointerdown', unlock, { once: true, capture: true });
-  window.addEventListener('keydown', unlock, { once: true, capture: true });
+  // iPhone only allows this on a finished tap, so keep trying on every tap until the sound is running
+  ShemaAudio.unlock(() => { if (G.sound) ensureAudio(); return ac; });
   // switching games
   $('btnMode').addEventListener('click', () => { if (SHELL) SHELL.openPicker(); else location.href = 'index.html'; });
   window.__shemaStop = () => { for (const n of G.noises) detachVoice(n); try { master && master.disconnect(); } catch (e) { } G.sound = false; };

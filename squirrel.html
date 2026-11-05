@@ -76,6 +76,8 @@
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: manipulation; }
+  .app { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
   body {
     margin: 0; background: var(--bg-0); color: var(--text-0); font-family: var(--sans); font-size: 14px;
     background-image: radial-gradient(ellipse 1200px 600px at 15% -10%, var(--page-glow-a), transparent 60%),
@@ -184,15 +186,16 @@
   .pad { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 14px; padding: 10px 14px; background: var(--bg-1); border-top: 1px solid var(--line); touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; transition: background .08s; }
   .pad.down { background: var(--bg-2); }
   .meter-wrap { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-  .mlabel { display: flex; align-items: baseline; gap: 8px; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-2); }
+  .mlabel { display: flex; flex-wrap: nowrap; min-width: 0; align-items: baseline; gap: 8px; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-2); }
+  .mlabel b, .mlabel { white-space: nowrap; }
   .mlabel b { font-size: 15px; letter-spacing: 0; color: var(--text-0); font-variant-numeric: tabular-nums; }
-  .mlabel .r { margin-left: auto; text-transform: none; letter-spacing: .02em; }
+  .mlabel .r { margin-left: auto; flex: 0 1 auto; text-transform: none; letter-spacing: .02em; }
   .nbar { position: relative; height: 12px; border-radius: 6px; background: var(--bg-3); }
   .nbar .fill { position: absolute; inset: 0 auto 0 0; border-radius: 6px; background: var(--green); transition: width .08s linear; }
   .nbar .tick { position: absolute; top: -4px; bottom: -4px; width: 3px; margin-left: -1px; border-radius: 2px; }
   .lock { height: 5px; border-radius: 3px; background: var(--bg-3); overflow: hidden; }
   .lock > div { height: 100%; width: 0; background: var(--red); }
-  .status { font-size: 13px; font-weight: 600; color: var(--text-1); min-height: 1.3em; }
+  .status { font-size: 13px; font-weight: 600; color: var(--text-1); height: 1.3em; line-height: 1.3em; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .status.bad { color: var(--red); } .status.ok { color: var(--green); }
   .jumpkey { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 92px; height: 56px; border-radius: 12px; border: 2px solid var(--amber); color: var(--amber); font-weight: 800; font-size: 15px; background: var(--amber-glow); }
   .jumpkey small { font-family: var(--mono); font-weight: 500; font-size: 9px; letter-spacing: .08em; color: var(--text-2); }
@@ -221,7 +224,7 @@
   }
   /* phone held sideways: slim top bar, one-line panel */
   @media (orientation: landscape) and (max-height: 620px) {
-    .app { gap: 6px; padding-block: 6px 6px; }
+    .app { gap: 6px; padding-block: 6px max(6px, env(safe-area-inset-bottom, 0px)); }
     .shema-logo { height: 22px; }
     .brand-sub { display: none; }
     .btn { padding: 5px 10px; }
@@ -277,6 +280,7 @@
   <div class="intro-sub">NOISE EVENT MONITOR</div>
   <div class="intro-skip">tap to skip</div>
 </div>
+<script src="ios-audio.js"></script>
 <script>document.body.classList.add('intro-on');</script>
 
 <div class="app">
@@ -936,16 +940,25 @@
 
   // ================= the screen =================
   const cv = $('scene'), ctx = cv.getContext('2d'), stage = $('stage'), view = { c: ctx, K: 1, ox: 0, oy: 0, cw: 0, ch: 0, VW: MINW };
-  function layout(v, cnv, wcss, hcss) {
+  function layout(v, cnv, wcss, hcss, refH = hcss) {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     cnv.width = Math.round(wcss * dpr); cnv.height = Math.round(hcss * dpr);
     v.cw = wcss; v.ch = hcss; v.dpr = dpr;
     const minW = wcss < hcss * 1.4 ? 360 : MINW;   // a phone held upright gets a closer view
-    v.K = Math.min(hcss / (H - VIEW_TOP), wcss / minW, wcss / 760, 2); v.VW = wcss / v.K; v.ox = 0;   // crop the empty sky above VIEW_TOP when space is short
+    v.K = Math.min(refH / (H - VIEW_TOP), wcss / minW, wcss / 760, 2); v.VW = wcss / v.K; v.ox = 0;   // crop the empty sky above VIEW_TOP when space is short
     v.oy = hcss - H * v.K;     // the street sits at the bottom; extra height is sky
   }
-  function resize() { const r = cv.getBoundingClientRect(); layout(view, cv, r.width, r.height); }
+  // The zoom is set by the tallest street seen at this width. When something takes a little height away
+  // (Safari's toolbar sliding in on an iPhone held sideways), the street keeps its size and only a strip
+  // of sky is covered, instead of the whole scene shrinking and growing.
+  let refW = 0, refH = 0;
+  function resize() {
+    const r = cv.getBoundingClientRect(); if (!r.width || !r.height) return;
+    if (Math.abs(r.width - refW) > 2 || r.height < refH * 0.75) { refW = r.width; refH = r.height; } else refH = Math.max(refH, r.height);
+    layout(view, cv, r.width, r.height, refH);
+  }
   new ResizeObserver(resize).observe(cv);
+  document.addEventListener('gesturestart', e => e.preventDefault());
 
   // ================= game flow =================
   let W = newWorld(), mode = 'start', best = 0;
@@ -1006,8 +1019,8 @@
     const lk = $('lockFill'); lk.style.width = (w.lock * 100) + '%';
     let msg, cls = '';
     if (mode !== 'play') msg = 'Tap Start to run';
-    else if (w.lock > 0.05 && w.heard) { msg = 'Shema hears you and is locking on. Get quiet!'; cls = 'bad'; }
-    else if (w.hidden) { msg = 'Hidden in the tree. Shema can’t locate you.'; cls = 'ok'; }
+    else if (w.lock > 0.05 && w.heard) { msg = 'Shema is locking on. Get quiet!'; cls = 'bad'; }
+    else if (w.hidden) { msg = 'Hidden in the tree.'; cls = 'ok'; }
     else if (w.rain > 0.5) { msg = 'Rain is masking you. Run!'; cls = 'ok'; }
     else if (w.taxi && ambient(w) > AMBIENT + 6) { msg = 'The taxi is masking you.'; cls = 'ok'; }
     else if (w.quiet > 0) { msg = `Quiet paws: ${Math.ceil(w.quiet)} s`; cls = 'ok'; }
@@ -1097,7 +1110,7 @@
       for (const k of ['squirrel', 'cat', 'taxi', 'owl', 'hadeda'])
         fetch(`assets/${k}.mp3`).then(r => r.arrayBuffer()).then(a => ac.decodeAudioData(a)).then(b => { BUF[k] = b; }).catch(() => { });
     }
-    if (ac.state === 'suspended') ac.resume();
+    ShemaAudio.wake(ac);
     return true;
   }
   const live = () => sound.on && ac && !paused;
@@ -1171,10 +1184,9 @@
   });
   soundUi();
   if (sound.on && SHELL) ensureAudio();
-  const unlock = () => { if (sound.on) ensureAudio(); };
-  window.addEventListener('pointerdown', unlock, { once: true, capture: true });
-  window.addEventListener('keydown', unlock, { once: true, capture: true });
-  document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else if (sound.on) ac.resume(); });
+  // iPhone only allows this on a finished tap, so keep trying on every tap until the sound is running
+  ShemaAudio.unlock(() => { if (sound.on) ensureAudio(); return ac; });
+  document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else if (sound.on) ShemaAudio.wake(ac); });
   $('btnMode').addEventListener('click', () => { if (SHELL) SHELL.openPicker(); else location.href = 'index.html'; });
   let paused = false;
   window.__shemaPause = p => { paused = p; if (ac && master) master.gain.setTargetAtTime(p || !sound.on ? 0 : 0.7, ac.currentTime, 0.05); };

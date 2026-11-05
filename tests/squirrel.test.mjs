@@ -364,3 +364,29 @@ for (const vp of [{ width: 375, height: 740, name: 'phone upright' }, { width: 7
     } finally { await h.close(); }
   });
 }
+
+test('iPhone sideways: the street keeps its size as the status line changes and Safari\'s toolbar comes and goes', async () => {
+  for (const vp of [{ width: 844, height: 390 }, { width: 568, height: 320 }, { width: 390, height: 844 }]) {
+    const h = await squirrel({ viewport: vp, touch: true, mobile: true });
+    try {
+      const p = h.page;
+      await startFrozen(p);
+      const size = () => p.evaluate(() => { const r = document.getElementById('scene').getBoundingClientRect(); return { h: Math.round(r.height), K: +__r.view.K.toFixed(4), pad: Math.round(document.getElementById('pad').getBoundingClientRect().height) }; });
+      const first = await size();
+      // every message the panel can show, including the longest ones
+      for (const set of ['w.lock = 0.5; w.heard = true', 'w.hidden = true', 'w.rain = 1', 'w.quiet = 3', 'w.lock = 0.5', 'w.p.ground = null']) {
+        await p.evaluate(s => { const w = __r.W; w.lock = 0; w.heard = false; w.hidden = false; w.rain = 0; w.quiet = 0; new Function('w', s)(w); }, set);
+        await p.waitForTimeout(150);
+        assert.deepEqual(await size(), first, `${vp.width}×${vp.height} after ${set}`);
+      }
+      if (vp.width > vp.height) {
+        // the toolbar takes ~50 px away, then gives it back: the zoom must not change
+        await p.setViewportSize({ width: vp.width, height: vp.height - 50 }); await p.waitForTimeout(150);
+        assert.equal((await size()).K, first.K, `${vp.width}×${vp.height} toolbar in`);
+        await p.setViewportSize(vp); await p.waitForTimeout(150);
+        assert.deepEqual(await size(), first, `${vp.width}×${vp.height} toolbar out`);
+      }
+      assert.deepEqual(h.problems, []);
+    } finally { await h.close(); }
+  }
+});

@@ -289,6 +289,7 @@
   <div class="intro-sub">NOISE EVENT MONITOR</div>
   <div class="intro-skip">tap to skip</div>
 </div>
+<script src="ios-audio.js"></script>
 <script>document.body.classList.add('intro-on');</script>
 
 <div class="app">
@@ -978,7 +979,7 @@
         }).catch(() => { });
       }
     }
-    if (ac.state === 'suspended') ac.resume();
+    ShemaAudio.wake(ac);
     if (state.sound) for (const s of state.sources) attachVoice(s);
     return true;
   }
@@ -1066,7 +1067,7 @@
     }
     soundUi();
   });
-  document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else if (state.sound) ac.resume(); });
+  document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else if (state.sound) ShemaAudio.wake(ac); });
   document.getElementById('btnMode').addEventListener('click', () => { if (SHELL) SHELL.openPicker(); else location.href = 'index.html'; });
   window.__shemaStop = () => { for (const s of state.sources) detachVoice(s); try { master && master.disconnect(); } catch (e) { } state.sound = false; };
 
@@ -1204,9 +1205,8 @@
   soundUi();
   // sound is on by default; browsers only let it start after a tap, so unlock it on the first one
   if (state.sound && SHELL) ensureAudio();
-  const unlock = () => { if (state.sound) ensureAudio(); };
-  window.addEventListener('pointerdown', unlock, { once: true, capture: true });
-  window.addEventListener('keydown', unlock, { once: true, capture: true });
+  // iPhone only allows this on a finished tap, so keep trying on every tap until the sound is running
+  ShemaAudio.unlock(() => { if (state.sound) ensureAudio(); return ac; });
   if (location.hash === '#test') window.__s = { state, step, addSource, removeSource, setNight, currentReading, judge, freeSpot, geom, TYPES, MAX_SOURCES, RANGE, DEV, sx, sy };
   requestAnimationFrame(frame);
 
