@@ -302,7 +302,7 @@
           <div class="tag">Free play<span class="now" hidden>Playing</span></div>
           <div class="tname">Sandbox</div>
           <div class="tdesc">Put noises anywhere on the street and watch Shema measure, locate and judge them.</div>
-          <span class="hold wide" data-orient="landscape"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg><span>Turn phone sideways</span></span>
+          <span class="hold tall" data-orient="portrait"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg><span>Hold phone upright</span></span>
           <span class="go">Open</span>
         </div>
       </button>
@@ -332,7 +332,7 @@
   const GAMES = {
     grandma: { src: 'grandma.html', name: 'Let Grandma Sleep', orient: 'portrait', why: 'Grandma sits above the street, so you can watch her and the noises at once.' },
     squirrel: { src: 'squirrel.html', name: 'Squirrel Run', orient: 'landscape', why: 'You see much further ahead across the rooftops, so there\u2019s time to jump.' },
-    sandbox: { src: 'sandbox.html', name: 'Sandbox', orient: 'landscape', why: 'You get a much bigger street to put your noises on.' },
+    sandbox: { src: 'sandbox.html', name: 'Sandbox', orient: 'portrait', why: 'The street sits on top with the tray of noises under it, and Shema\u2019s readout has room to scroll below.' },
   };
   const picker = document.getElementById('picker'), btnBack = document.getElementById('btnBack');
   let frame = null, current = null, ac = null, bus = null;

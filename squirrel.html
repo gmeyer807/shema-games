@@ -129,7 +129,15 @@
   .ocard canvas { width: 100%; height: auto; aspect-ratio: 4 / 3; max-height: 38vh; object-fit: contain; border-radius: 10px; display: block; background: var(--rm-wall); }
   .overlay.solid { background: color-mix(in srgb, var(--bg-0) 88%, transparent); }
   .deck { gap: 16px; }
-  .slides { position: relative; min-height: 0; }
+  .slides { position: relative; }
+  /* nothing in a card shrinks below its content: on a short screen the card scrolls instead of the slide spilling over the buttons */
+  .ocard > * { flex-shrink: 0; }
+  /* short phones held upright: smaller pictures so the text and buttons fit without scrolling */
+  @media (orientation: portrait) and (max-height: 700px) {
+    .ocard { padding: 16px; gap: 10px; }
+    .ocard canvas, .ocard .clockcard, .ocard .xart { max-height: 24vh; }
+    .ocard .slide h1 { font-size: 22px; } .ocard .slide p { font-size: 15px; }
+  }
   .slide { display: flex; flex-direction: column; gap: 10px; animation: slideIn .28s ease; }
   .slide.back { animation-name: slideBack; }
   .slide h1 { font-size: 26px; }
@@ -1119,7 +1127,7 @@
     acorn() { tone(660, 0, 0.12, 'triangle'); tone(990, 0.07, 0.18, 'triangle'); },   // the same chime as catching a noise in Grandma
     paws() { [660, 880, 1100].forEach((f, i) => tone(f, i * 0.07, 0.25, 'sine', 0.1)); },
     cat() { if (!play('cat')) tone(700, 0, 0.4, 'sawtooth', 0.12, 1200); },
-    squawk() { if (!play('hadeda')) { tone(560, 0, 0.18, 'sawtooth', 0.14, 380); tone(560, 0.22, 0.2, 'sawtooth', 0.14, 360); } },
+    squawk() { if (!play('hadeda', SOUND_LEVEL, 1, 1.7 /* five calls in the recording: keep the first two */)) { tone(560, 0, 0.18, 'sawtooth', 0.14, 380); tone(560, 0.22, 0.2, 'sawtooth', 0.14, 360); } },
     taxi() { if (!play('taxi')) { tone(466, 0, 0.15, 'square', 0.1); tone(466, 0.22, 0.15, 'square', 0.1); } },
     caught() { tone(520, 0, 0.25, 'square', 0.12); tone(390, 0.22, 0.4, 'square', 0.12); },   // the same sting as Grandma waking up
     fall() { tone(600, 0, 0.6, 'triangle', 0.15, 120); },

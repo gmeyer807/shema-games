@@ -121,7 +121,15 @@
   .ocard canvas { width: 100%; height: auto; aspect-ratio: 4 / 3; max-height: 38vh; object-fit: contain; border-radius: 10px; display: block; background: var(--rm-wall); }
   .overlay.solid { background: color-mix(in srgb, var(--bg-0) 88%, transparent); }
   .deck { gap: 16px; }
-  .slides { position: relative; min-height: 0; }
+  .slides { position: relative; }
+  /* nothing in a card shrinks below its content: on a short screen the card scrolls instead of the slide spilling over the buttons */
+  .ocard > * { flex-shrink: 0; }
+  /* short phones held upright: smaller pictures so the text and buttons fit without scrolling */
+  @media (orientation: portrait) and (max-height: 700px) {
+    .ocard { padding: 16px; gap: 10px; }
+    .ocard canvas, .ocard .clockcard, .ocard .xart { max-height: 24vh; }
+    .ocard .slide h1 { font-size: 22px; } .ocard .slide p { font-size: 15px; }
+  }
   .slide { display: flex; flex-direction: column; gap: 10px; animation: slideIn .28s ease; }
   .slide.back { animation-name: slideBack; }
   .slide h1 { font-size: 26px; }
@@ -216,8 +224,9 @@
     .shema-logo { height: 24px; }
     .brand-sub { display: none; }
     .card { padding: 8px 10px; gap: 6px; }
-    .gma-body { flex-direction: row; align-items: center; gap: 10px; }
-    canvas#gmaCanvas { width: 42%; flex-shrink: 0; }
+    /* Grandma's picture across the top of the side column, as big as the height allows, the meter under it */
+    .gma-body { flex-direction: column; align-items: stretch; gap: 6px; }
+    canvas#gmaCanvas { width: min(100%, calc(40dvh * 4 / 3)); margin-inline: auto; flex-shrink: 0; }
     .gma-side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
     .mood { font-size: 12px; }
     .hud .tag { padding: 4px 8px; font-size: 12px; }

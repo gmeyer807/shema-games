@@ -167,7 +167,7 @@
   .badge.bad { color: var(--red); } .badge.ok { color: var(--green); } .badge.idle { color: var(--text-2); } .badge.nui { color: var(--amber); }
   .empty { font-size: 12px; color: var(--text-2); padding: 6px 2px; }
   .note { font-size: 11px; color: var(--text-2); line-height: 1.5; padding: 2px 2px 6px; }
-  .linkbtn { border: 0; background: none; padding: 0; font-family: var(--mono); font-size: 10px; color: var(--text-2); cursor: pointer; text-decoration: underline; margin-left: auto; letter-spacing: .04em; text-transform: none; }
+  .linkbtn { border: 0; background: none; padding: 0 8px; margin: -8px -8px -8px auto; min-height: 30px; min-width: 44px; font-family: var(--mono); font-size: 11px; color: var(--text-2); cursor: pointer; text-decoration: underline; letter-spacing: .04em; text-transform: none; }   /* small text, but a finger-sized target */
 
   /* ---------- opening sequence (same as the Shema app) ---------- */
   .intro { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; cursor: pointer; }
@@ -202,7 +202,15 @@
   .ocard canvas { width: 100%; height: auto; aspect-ratio: 4 / 3; max-height: 38vh; object-fit: contain; border-radius: 10px; display: block; background: var(--rm-wall); }
   .overlay.solid { background: color-mix(in srgb, var(--bg-0) 88%, transparent); }
   .deck { gap: 16px; }
-  .slides { position: relative; min-height: 0; }
+  .slides { position: relative; }
+  /* nothing in a card shrinks below its content: on a short screen the card scrolls instead of the slide spilling over the buttons */
+  .ocard > * { flex-shrink: 0; }
+  /* short phones held upright: smaller pictures so the text and buttons fit without scrolling */
+  @media (orientation: portrait) and (max-height: 700px) {
+    .ocard { padding: 16px; gap: 10px; }
+    .ocard canvas, .ocard .clockcard, .ocard .xart { max-height: 24vh; }
+    .ocard .slide h1 { font-size: 22px; } .ocard .slide p { font-size: 15px; }
+  }
   .slide { display: flex; flex-direction: column; gap: 10px; animation: slideIn .28s ease; }
   .slide.back { animation-name: slideBack; }
   .slide h1 { font-size: 26px; }
