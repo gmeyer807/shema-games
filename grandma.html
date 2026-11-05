@@ -203,7 +203,7 @@
     .brand-sub { display: none; }
     .card { padding: 10px 12px; gap: 8px; }
     .gma-body { flex-direction: row; align-items: center; gap: 12px; }
-    canvas#gmaCanvas { width: clamp(96px, 30vw, 150px); flex-shrink: 0; }
+    canvas#gmaCanvas { width: clamp(120px, 46vw, 240px); flex-shrink: 0; }
     .gma-side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
     .log-list { padding-bottom: 2px; }
   }
@@ -369,7 +369,13 @@
   // e.g. { sleep: 'grandma_sleep.png', stir: 'grandma_stir.png', awake: 'grandma_awake.png' }.
   // Leave a state empty ('') to keep the drawn version for that state. Images are drawn to fit a 4:3 box.
   // ============================================================
-  const GRANDMA_ART = { sleep: '', stir: '', awake: '' };
+  // A list of pictures for one state takes turns, like a slow animation.
+  const GRANDMA_ART = {
+    sleep: [1, 2, 3, 4].map(i => `assets/grandma_sleep${i}.webp`),
+    stir: [1, 2, 3, 4].map(i => `assets/grandma_stir${i}.webp`),
+    awake: [1, 2, 3, 4].map(i => `assets/grandma_awake${i}.webp`),
+  };
+  const GRANDMA_FRAME_S = { sleep: 0.6, stir: 0.28, awake: 0.22 };   // seconds each picture stays
 
   // NOISE SPRITES: a file name per noise: a horizontal strip of 6 square frames facing right
   // (or { src, frames, fps } for another count). Empty = the emoji is used.
@@ -858,7 +864,10 @@
 
   // ---- Grandma sprite ----
   const ART = {};
-  for (const k of Object.keys(GRANDMA_ART)) if (GRANDMA_ART[k]) { const im = new Image(); im.onload = () => { ART[k] = im; drawStatic(); }; im.src = GRANDMA_ART[k]; }
+  for (const k of Object.keys(GRANDMA_ART)) {
+    const list = [].concat(GRANDMA_ART[k] || []).filter(Boolean);
+    list.forEach((src, i) => { const im = new Image(); im.onload = () => { (ART[k] = ART[k] || [])[i] = im; drawStatic(); }; im.src = src; });
+  }
 
   const SPR = {};
   for (const [k, v] of Object.entries(NOISE_ART)) {
@@ -877,7 +886,8 @@
     // mood: 'sleep' | 'stir' | 'awake'
     c.save();
     c.clearRect(0, 0, w, h);
-    const img = ART[mood];
+    const imgs = (ART[mood] || []).filter(Boolean);
+    const img = imgs.length ? imgs[Math.floor(t / (GRANDMA_FRAME_S[mood] || 1)) % imgs.length] : null;
     if (img) {
       const s = Math.min(w / img.width, h / img.height);
       c.drawImage(img, (w - img.width * s) / 2, (h - img.height * s) / 2, img.width * s, img.height * s);

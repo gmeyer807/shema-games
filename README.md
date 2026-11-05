@@ -31,7 +31,7 @@ All files live in `assets/`. Sprites are horizontal strips of 6 square frames, f
 | What | Where | Notes |
 |---|---|---|
 | Noise sprites and sounds | `NOISE_ART`, `NOISE_SOUNDS` in `grandma.html` and `sandbox.html` | sounds in `CALLS` play once each time the noise starts; the others loop |
-| Grandma pictures | `GRANDMA_ART` in `grandma.html` (`sleep`, `stir`, `awake`) | 4:3 picture, e.g. 1600 × 1200 |
+| Grandma pictures | `GRANDMA_ART` in `grandma.html` (`sleep`, `stir`, `awake`) | 4 frames per state, 4:3 (800 × 600), shown in turn; speed in `GRANDMA_FRAME_S` |
 | Squirrel Run | `assets/squirrel_run.webp`, `assets/squirrel_jump.webp` | jump frames: crouch, take-off, rising, top, falling, landing |
 
-Still missing: sprites for the bass car, drill and car alarm; sounds for the bass car, vuvuzela and hadeda; the three Grandma pictures. Until then the games use emoji and built-in synth sounds.
+Still missing: sprites for the bass car, drill and car alarm; sounds for the bass car, vuvuzela and hadeda. Until then the games use emoji and built-in synth sounds.

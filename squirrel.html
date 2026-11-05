@@ -201,7 +201,9 @@
     .app { padding-block: 8px 10px; }
     .brand-sub { display: none; }
     /* the street keeps a landscape shape; everything below it is a big thumb-sized jump button */
-    .street { flex: 0 0 auto; aspect-ratio: 430 / 340; max-height: 62%; }
+    .street { flex: none; height: clamp(220px, 82vw, 58%); }
+    .mlabel { flex-wrap: wrap; }
+    .mlabel .r { margin-left: 0; flex-basis: 100%; font-size: 13px; }
     .pad { flex: 1; display: flex; flex-direction: column; padding: 12px 14px 14px; gap: 10px; }
     .jumpkey { width: 100%; flex: 1; min-height: 72px; font-size: 20px; }
     .tip { display: block; }
@@ -299,7 +301,7 @@
     </div>
     <div class="pad" id="pad" role="button" aria-label="Jump">
       <div class="meter-wrap">
-        <div class="mlabel">What Shema hears <b id="nVal">30</b> dB(A)<span class="r status" id="status">Tap Start to run</span></div>
+        <div class="mlabel">Shema hears <b id="nVal">30</b> dB(A)<span class="r status" id="status">Tap Start to run</span></div>
         <div class="nbar"><div class="fill" id="nFill"></div><div class="tick" id="nAmb" style="background: var(--text-2)"></div><div class="tick" id="nThr" style="background: var(--red)"></div></div>
         <div class="lock" title="Shema locking on"><div id="lockFill"></div></div>
         <div class="legend"><span><i style="background: var(--text-2)"></i>ambient</span><span><i style="background: var(--red)"></i>Shema catches above this</span><span><i style="background: var(--red); height: 4px"></i>lock-on</span></div>
@@ -322,13 +324,13 @@
             <canvas width="640" height="360" aria-hidden="true"></canvas>
             <div class="step">2 / 3</div>
             <h1>Shema is listening</h1>
-            <p>Every landing makes noise. Tin roofs, big drops and bumping into a cat or a hadeda are loud. Go over the red line and Shema's beam swings to you while a red ring fills. If the ring closes, you're caught.</p>
+            <p>Every landing makes some noise. Tin roofs and big drops go over the red line, and crashing into a cat or a hadeda is the loudest of all. Over the line, Shema's beam swings to you and a red ring fills. If it closes, you're caught.</p>
           </section>
           <section class="slide" aria-label="3 of 3" hidden>
             <canvas width="640" height="360" aria-hidden="true"></canvas>
             <div class="step">3 / 3</div>
             <h1>Hide in the noise</h1>
-            <p>Leafy trees muffle your paws and hide you from the beam. Rain and passing taxis raise the street's own noise, so you can be louder. Grab acorns for points and the paw badge for 6 quiet seconds.</p>
+            <p>Jump over cats and hadedas. Leafy trees hide you from the beam, and rain or a passing taxi makes the street so noisy that Shema can hardly pick you out. To drop to a lower roof, just run off the edge. Grab acorns for points and the paw badge for 6 quiet seconds.</p>
             <div class="best" id="bestStart"></div>
           </section>
         </div>
@@ -372,7 +374,7 @@
   const H = 360;                 // ground (road) at the bottom of the world
   const MINW = 430;
   const VIEW_TOP = 100;          // nothing to land on above this height, so the view may cut it off              // always show at least this much street sideways, so there is time to react on a phone
-  const GRAV = 2300, JUMP = 760, AIRJUMP = 620, HOLD_G = 0.5, HOLD_MAX = 0.24;
+  const GRAV = 2300, JUMP = 620, AIRJUMP = 500, HOLD_G = 0.55, HOLD_MAX = 0.2;   // plain jump ≈ 84 units high (about 2 m), held ≈ 128
   const COYOTE = 0.09, BUFFER = 0.13;
   const HALF = 13;               // half the squirrel's width for collisions
   const speedAt = t => 230 + 160 * clamp(t / 150, 0, 1);     // 230 → 390 units/s over 2½ minutes
@@ -419,17 +421,26 @@
       const S = speedAt(w.t);
       const r = Math.random();
       const kind = r < 0.42 ? 'roof' : r < 0.62 ? 'tin' : r < 0.84 ? 'tree' : 'wire';
-      let y = clamp(w.lastY + rnd(-65, 75), kind === 'tree' ? 195 : 205, kind === 'tree' ? 285 : 305);   // low enough that a jump stays on screen
-      const dh = w.lastY - y;
-      const reach = S * airtime(dh);
-      const maxGap = Math.max(70, reach * (0.5 + 0.2 * prog) - 2 * HALF);
-      const gap = rnd(Math.min(60, maxGap * 0.6), maxGap);
+      let y = clamp(w.lastY + rnd(-50, 65) + (250 - w.lastY) * 0.35, kind === 'tree' ? 195 : 205, kind === 'tree' ? 285 : 300);   // wanders around the middle; low enough that a jump stays on screen
+      const dh = w.lastY - y;          // > 0: the next one is higher
+      let gap;
+      if (dh < -20) {
+        // LOWER: no jump needed. Running off the edge, the squirrel falls onto it: the gap is at most
+        // three quarters of how far it travels sideways while dropping that height
+        const fall = Math.sqrt(2 * -dh / GRAV);
+        gap = rnd(0, Math.max(0, S * fall * 0.75 - 2 * HALF));
+      } else {
+        // LEVEL or HIGHER: a plain jump (no hold, no second hop) always clears it
+        const reach = S * airtime(dh);
+        const maxGap = Math.max(60, reach * (0.55 + 0.2 * prog) - 2 * HALF);
+        gap = rnd(Math.min(50, maxGap * 0.6), maxGap);
+      }
       const width = kind === 'roof' ? rnd(240, 520) : kind === 'tin' ? rnd(220, 380) : kind === 'tree' ? rnd(150, 240) : rnd(200, 320);
       const x = w.genX + gap;
       const pl = addPlat(w, kind, x, width, y);
       // acorns: a little arc over the gap, or a row along the platform
       if (Math.random() < 0.55) {
-        if (Math.random() < 0.5 && gap > 80) for (let i = 0; i < 3; i++) { const f = (i + 1) / 4; w.items.push({ type: 'acorn', x: x - gap + gap * f, y: Math.min(w.lastY, y) - 40 - Math.sin(f * Math.PI) * 50 }); }
+        if (Math.random() < 0.5 && gap > 80 && dh >= -20) for (let i = 0; i < 3; i++) { const f = (i + 1) / 4; w.items.push({ type: 'acorn', x: x - gap + gap * f, y: Math.min(w.lastY, y) - 40 - Math.sin(f * Math.PI) * 50 }); }
         else { const n = Math.floor(width / 70); for (let i = 0; i < n; i++) w.items.push({ type: 'acorn', x: x + 35 + i * 70, y: y - 26 }); }
       }
       if (Math.random() < 0.09) w.items.push({ type: 'paws', x: x + width * 0.5, y: y - 44 });
@@ -455,6 +466,7 @@
   }
 
   // ================= simulation =================
+  // a crash (cat or hadeda) is the loudest thing of all; background noise (rain, a taxi) hides you
   function noiseEvent(w, L, x, y, label) {
     if (w.quiet > 0) L -= 15;
     w.noise = Math.max(w.noise, L);
@@ -524,7 +536,7 @@
       if (it.type === 'paws' && Math.abs(it.x - p.x) < 26 && Math.abs(it.y - (p.y - 16)) < 34) { it.gone = true; w.quiet = QUIET_S; if (!w.demo) sfx.paws(); }
       if (it.type === 'cat' && !it.hit && Math.abs(it.x - p.x) < 26 && p.y > it.y - 30) {
         it.hit = true; it.flee = 0;
-        noiseEvent(w, 66, p.x, p.y - 40, 'cat');
+        noiseEvent(w, 68, p.x, p.y - 40, 'cat');
         if (!w.demo) sfx.cat();
       }
     }
@@ -532,7 +544,7 @@
     if (!w.demo) {
       w.nextBird -= dt;
       if (w.nextBird <= 0) {
-        const y = rnd(120, 230);
+        const y = (p.ground ? p.ground.y : p.y) - rnd(14, 30);   // flies in at head height: jump over it
         w.birds.push({ x: p.x + camW + 160, y, y0: y, warn: 1.1, t: 0 });
         w.nextBird = rnd(8, 14) * (1 - 0.35 * clamp(w.t / 150, 0, 1));
       }
@@ -541,7 +553,7 @@
       b.t += dt;
       if (b.warn > 0) { b.warn -= dt; b.x = p.x + camW + 160; continue; }
       b.x -= 170 * dt; b.y = b.y0 + Math.sin(b.t * 3) * 14;
-      if (!b.hit && Math.abs(b.x - p.x) < 28 && Math.abs(b.y - (p.y - 16)) < 26) { b.hit = true; noiseEvent(w, 66, p.x, p.y - 40, 'hadeda'); if (!w.demo) sfx.squawk(); }
+      if (!b.hit && Math.abs(b.x - p.x) < 28 && Math.abs(b.y - (p.y - 16)) < 26) { b.hit = true; noiseEvent(w, 68, p.x, p.y - 40, 'hadeda'); if (!w.demo) sfx.squawk(); }
     }
     w.birds = w.birds.filter(b => b.x > p.x - 400);
 
@@ -566,7 +578,7 @@
     // ---- what Shema hears ----
     const surf = p.ground ? SURF[p.ground.kind] : null;
     const base = (surf ? surf.run : 26) - (w.quiet > 0 ? 15 : 0);
-    w.noise = Math.max(base, w.noise - 18 * dt);
+    w.noise = Math.max(base, w.noise - 14 * dt);
     w.hidden = !!(p.ground && p.ground.kind === 'tree') || inCanopy(w);
     const thr = threshold(w);
     w.heard = w.noise > thr && !w.hidden;
@@ -577,8 +589,9 @@
     const want = w.heard ? bearing : (w.lock > 0.05 ? bearing : sweep);
     w.aim += clamp(want - w.aim, -150 * dt, 150 * dt);
     const aligned = Math.abs(bearing - w.aim) < 6;
-    if (w.heard && aligned) w.lock += dt / 1.6;
-    else w.lock -= dt * (w.hidden ? 1.3 : 0.5);
+    // one crash takes the ring most of the way; loud landings add a little each; it empties when you are quiet
+    if (w.heard && aligned) w.lock += dt / 1.8;
+    else w.lock -= dt * (w.hidden ? 1.5 : 0.35);
     w.lock = clamp(w.lock, 0, 1);
     if (w.lock >= 1 && !w.demo) { end(w, 'caught'); return; }
     if (w.demo && w.lock >= 0.95) w.lock = 0.95;
@@ -589,8 +602,8 @@
     const p = w.p;
     const impact = p.vy;
     p.y = q.y; p.vy = 0; p.ground = q; p.air = 0; p.blocked = false; p.run = 0;
-    const L = SURF[q.kind].land + impact / 80;
-    noiseEvent(w, L, p.x, p.y - 34);
+    // landings make noise: a plain hop onto tiles barely registers, tin roofs and big drops go over the line
+    const L = noiseEvent(w, SURF[q.kind].land + impact / 80, p.x, p.y - 34);
     if (!w.demo) sfx.land(L, q.kind);
     if (p.buffer > 0) { p.buffer = 0; jump(w, JUMP); }
   }
@@ -713,11 +726,12 @@
     const dedicated = SPR.run && SPR.jump;
     // with the run and jump strips: gallop on the ground, and pick the jump frame from how fast it rises or falls
     const jf = p.vy < -450 ? 1 : p.vy < -120 ? 2 : p.vy < 220 ? 3 : 4;   // take-off, rising, top, falling (5 = landing squash)
-    const fr = p.ground ? (p.run < 0.08 && dedicated ? 5 : Math.floor(now / 70)) : (dedicated ? jf : 2);
+    const RUN = [0, 1, 4, 5];   // the strip's 3rd and 4th frames are standing poses, so the gallop skips them
+    const fr = p.ground ? (p.run < 0.08 && dedicated ? 5 : dedicated ? RUN[Math.floor(now / 80) % 4] : Math.floor(now / 70)) : (dedicated ? jf : 2);
     c.save(); c.translate(px, py); if (!dedicated) c.rotate(p.ground ? 0 : clamp(p.vy / 2400, -0.35, 0.45));
     if (w.quiet > 0) { c.fillStyle = T['amber']; c.globalAlpha = 0.18 + 0.1 * Math.sin(now / 120); c.beginPath(); c.arc(0, -18 * K, 30 * K, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1; }
     const key = dedicated ? (p.ground && p.run >= 0.08 ? 'run' : 'jump') : 'squirrel';
-    if (!sprite(c, key, fr, 0, 4 * K, 52 * K, false)) { c.font = `${34 * K}px sans-serif`; c.textAlign = 'center'; c.fillText('🐿️', 0, 0); }
+    if (!sprite(c, key, fr, 0, 6 * K, 62 * K, false)) { c.font = `${34 * K}px sans-serif`; c.textAlign = 'center'; c.fillText('🐿️', 0, 0); }
     c.restore();
     // tree canopies are drawn in front, so the squirrel can hide in them
     for (const q of w.plats) {
@@ -756,9 +770,11 @@
     const a = w.aim * Math.PI / 180, R = Math.hypot(v.cw, v.ch);
     const bg = c.createRadialGradient(dx, dy, 0, dx, dy, R * 0.8); bg.addColorStop(0, w.heard ? T['red'] : T['amber']); bg.addColorStop(1, 'rgba(0,0,0,0)');
     c.globalAlpha = w.heard ? 0.38 : 0.22; c.fillStyle = bg;
-    c.beginPath(); c.moveTo(dx, dy); c.arc(dx, dy, R, -a - 0.07, -a + 0.07); c.closePath(); c.fill();
+    const BR = (w.heard || w.lock > 0.05) ? R : Math.min(R, 260 * K);
+    c.beginPath(); c.moveTo(dx, dy); c.arc(dx, dy, BR, -a - 0.07, -a + 0.07); c.closePath(); c.fill();
     c.globalAlpha = 0.9; c.strokeStyle = w.heard ? T['red'] : T['amber']; c.lineWidth = 2;
-    c.beginPath(); c.moveTo(dx, dy); c.lineTo(dx + Math.cos(a) * R, dy - Math.sin(a) * R); c.stroke(); c.globalAlpha = 1;
+    const BL = (w.heard || w.lock > 0.05) ? Math.hypot(px - dx, py - 18 * K - dy) : Math.min(R, 220 * K);
+    c.beginPath(); c.moveTo(dx, dy); c.lineTo(dx + Math.cos(a) * BL, dy - Math.sin(a) * BL); c.stroke(); c.globalAlpha = 1;
     c.fillStyle = w.heard ? T['red'] : T['amber']; rr(c, dx - 11 * K, dy - 5 * K, 22 * K, 10 * K, 3 * K); c.fill();
     c.fillStyle = T['bg-1']; for (let i = 0; i < 4; i++) { c.beginPath(); c.arc(dx - 7.5 * K + i * 5 * K, dy, 1.5 * K, 0, Math.PI * 2); c.fill(); }
     c.fillStyle = T['rn-star']; c.font = `700 ${Math.max(9, 10 * K)}px ${MONO}`; c.textAlign = 'center'; c.textBaseline = 'top'; c.fillText('SHEMA', dx, dy + 8 * K);
@@ -786,7 +802,8 @@
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     cnv.width = Math.round(wcss * dpr); cnv.height = Math.round(hcss * dpr);
     v.cw = wcss; v.ch = hcss; v.dpr = dpr;
-    v.K = Math.min(hcss / (H - VIEW_TOP), wcss / MINW, wcss / 760, 2); v.VW = wcss / v.K; v.ox = 0;   // crop the empty sky above VIEW_TOP when space is short
+    const minW = wcss < hcss * 1.4 ? 360 : MINW;   // a phone held upright gets a closer view
+    v.K = Math.min(hcss / (H - VIEW_TOP), wcss / minW, wcss / 760, 2); v.VW = wcss / v.K; v.ox = 0;   // crop the empty sky above VIEW_TOP when space is short
     v.oy = hcss - H * v.K;     // the street sits at the bottom; extra height is sky
   }
   function resize() { const r = cv.getBoundingClientRect(); layout(view, cv, r.width, r.height); }
@@ -813,7 +830,7 @@
     if (isBest) { best = sc; try { localStorage.setItem('shema.squirrel.best', String(best)); } catch (e) { } }
     $('endTitle').textContent = why === 'caught' ? `Shema caught you at ${metres(w)} m` : `You fell at ${metres(w)} m`;
     $('endText').textContent = why === 'caught'
-      ? 'You were too loud for too long, and Shema locked on. Land softly, use the trees, and run when rain or a taxi covers you.'
+      ? 'Too much noise too close together, and Shema locked on. Jump over the cats, go easy on the tin roofs, and after a bump get into a tree or wait for rain or a taxi.'
       : 'Missed the jump. Hold to jump higher, and tap again in the air for a second hop.';
     $('endArt').textContent = `${metres(w)} m`;
     $('stScore').textContent = sc; $('stAcorns').textContent = w.acorns; $('stLoud').textContent = w.loudest ? Math.round(w.loudest) : '—';
@@ -889,12 +906,12 @@
     const lay = i === 0
       ? [{ kind: 'roof', x: -300, w: 520, y: 240 }, { kind: 'roof', x: 330, w: 300, y: 210 }, { kind: 'wire', x: 740, w: 260, y: 200 }, { kind: 'roof', x: 1110, w: 600, y: 240 }]
       : i === 1
-        ? [{ kind: 'roof', x: -300, w: 480, y: 210 }, { kind: 'tin', x: 300, w: 380, y: 270 }, { kind: 'roof', x: 790, w: 900, y: 240 }]
+        ? [{ kind: 'roof', x: -300, w: 480, y: 230 }, { kind: 'roof', x: 240, w: 900, y: 260 }]
         : [{ kind: 'roof', x: -300, w: 460, y: 240 }, { kind: 'tree', x: 270, w: 220, y: 200 }, { kind: 'tree', x: 600, w: 200, y: 190 }, { kind: 'roof', x: 920, w: 800, y: 230 }];
     const w = newWorld({ layout: lay, demo: { speed: 230, rain: i === 2 ? false : false } });
     w.p.x = -150; w.p.ground = w.plats[0]; w.p.y = w.plats[0].y;
     if (i === 0) { w.items.push({ type: 'acorn', x: 270, y: 170 }, { type: 'acorn', x: 300, y: 160 }, { type: 'acorn', x: 680, y: 140 }); }
-    if (i === 1) w.items.push({ type: 'cat', x: 1150, y: 240 });
+    if (i === 1) w.items.push({ type: 'cat', x: 520, y: 260 });
     return { w, i, v: { c: null, K: 1, ox: 0, oy: 0, cw: 0, ch: 0, VW: 0 } };
   }
   function runDemo(d, dt, now) {
