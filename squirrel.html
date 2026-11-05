@@ -961,10 +961,13 @@
     return true;
   }
   const live = () => sound.on && ac && !paused;
-  function play(k, vol = 0.6, rate = 1) {
+  function play(k, vol = 0.6, rate = 1, max = 0) {
     if (!live() || !BUF[k]) return false;
     const s = ac.createBufferSource(), g = ac.createGain(); s.buffer = BUF[k]; s.playbackRate.value = rate; g.gain.value = vol;
-    s.connect(g); g.connect(master); s.start(); return true;
+    s.connect(g); g.connect(master); s.start();
+    // max: cut a long recording short (with a quick fade) after this many seconds
+    if (max) { const t = ac.currentTime; g.gain.setValueAtTime(vol, t + max - 0.3); g.gain.linearRampToValueAtTime(0, t + max); s.stop(t + max + 0.05); }
+    return true;
   }
   function tone(f, at, dur, type = 'sine', vol = 0.15, f2) {
     if (!live()) return;
@@ -988,7 +991,7 @@
     cat() { if (!play('cat', 0.7, 1.2)) tone(700, 0, 0.4, 'sawtooth', 0.12, 1200); },
     squawk() { tone(560, 0, 0.18, 'sawtooth', 0.14, 380); tone(560, 0.22, 0.2, 'sawtooth', 0.14, 360); },
     taxi() { if (!play('taxi', 0.5)) { tone(466, 0, 0.15, 'square', 0.1); tone(466, 0.22, 0.15, 'square', 0.1); } },
-    caught() { if (!play('alarm', 0.35)) { tone(520, 0, 0.25, 'square', 0.12); tone(390, 0.22, 0.4, 'square', 0.12); } },
+    caught() { if (!play('alarm', 0.35, 1, 3)) { tone(520, 0, 0.25, 'square', 0.12); tone(390, 0.22, 0.4, 'square', 0.12); } },
     fall() { tone(600, 0, 0.6, 'triangle', 0.15, 120); },
   };
   let nextOwl = 12, lockBeep = 0;

@@ -34,4 +34,6 @@ All files live in `assets/`. Sprites are horizontal strips of 6 square frames, f
 | Grandma pictures | `GRANDMA_ART` in `grandma.html` (`sleep`, `stir`, `awake`) | 4 frames per state, 4:3 (800 × 600), shown in turn; speed in `GRANDMA_FRAME_S` |
 | Squirrel Run | `assets/squirrel_run.webp`, `assets/squirrel_jump.webp` | jump frames: crouch, take-off, rising, top, falling, landing |
 
-Still missing: sprites for the bass car, drill and car alarm; sounds for the bass car, vuvuzela and hadeda. Until then the games use emoji and built-in synth sounds.
+Every sound file is levelled to the same loudness (-16 LUFS, mono 44.1 kHz) with no silence at the start, so each noise is equally loud and is heard the moment it appears. Do the same for any new sound (for example with ffmpeg's `loudnorm` and `silenceremove`).
+
+Still missing: sprites for the bass car, drill and car alarm. Until then the games use emoji for those.

@@ -383,7 +383,7 @@
 
   // REAL SOUNDS: a file name per noise ('dog.mp3', '.ogg' or '.wav'), played on a loop and made quieter with distance.
   // Empty = the sound is synthesised in the browser.
-  const NOISE_SOUNDS = { dog: 'assets/dog.mp3', cat: 'assets/cat.mp3', squirrel: 'assets/squirrel.mp3', owl: 'assets/owl.mp3', taxi: 'assets/taxi.mp3', boombox: '', vuvuzela: '', drill: 'assets/drill.mp3', alarm: 'assets/alarm.mp3', frog: 'assets/frog.mp3', mosquito: 'assets/mosquito.mp3', hadeda: '', rooster: 'assets/rooster.mp3' };
+  const NOISE_SOUNDS = { dog: 'assets/dog.mp3', cat: 'assets/cat.mp3', squirrel: 'assets/squirrel.mp3', owl: 'assets/owl.mp3', taxi: 'assets/taxi.mp3', boombox: 'assets/boombox.mp3', vuvuzela: 'assets/vuvuzela.mp3', drill: 'assets/drill.mp3', alarm: 'assets/alarm.mp3', frog: 'assets/frog.mp3', mosquito: 'assets/mosquito.mp3', hadeda: 'assets/hadeda.mp3', rooster: 'assets/rooster.mp3' };
   // 'call' sounds play once each time the noise starts up; the others loop while the noise is on
   const CALLS = new Set(['dog', 'cat', 'squirrel', 'owl', 'taxi', 'rooster', 'hadeda']);
 
@@ -875,11 +875,19 @@
     const o = typeof v === 'string' ? { src: v, frames: 6, fps: 9 } : v;
     const im = new Image(); im.onload = () => { SPR[k] = { img: im, frames: o.frames || 1, fps: o.fps || 8 }; }; im.src = o.src;
   }
-  const BUF = {};
+  const BUF = {}, RAW = {}, DECODING = {};
+  // download the recordings as the page opens, so they are ready to decode on the first tap
+  for (const [k, v] of Object.entries(NOISE_SOUNDS)) if (v) RAW[k] = fetch(v).then(r => r.ok ? r.arrayBuffer() : null).catch(() => null);
   function loadSounds() {
-    for (const [k, v] of Object.entries(NOISE_SOUNDS)) {
-      if (!v || BUF[k]) continue;
-      fetch(v).then(r => r.arrayBuffer()).then(a => ac.decodeAudioData(a)).then(b => { BUF[k] = b; }).catch(() => { });
+    for (const k of Object.keys(RAW)) {
+      if (BUF[k] || DECODING[k]) continue;
+      DECODING[k] = true;
+      RAW[k].then(a => a && ac.decodeAudioData(a.slice(0))).then(b => {
+        if (!b) return;
+        BUF[k] = b;
+        // a noise already on the street switches from the synthesised stand-in to the recording
+        for (const n of G.noises) if (n.type === k && n.voice && !n.voice.real) { detachVoice(n); attachVoice(n); }
+      }).catch(() => { DECODING[k] = false; });
     }
   }
   function drawGrandma(c, w, h, mood, t) {
@@ -1198,6 +1206,10 @@
     loadSounds();
     return true;
   }
+  // Every recording is levelled to the same loudness (-16 LUFS), so each noise plays equally loud;
+  // distance only softens it a little (at most about 5 dB), so a far-off mosquito is still heard.
+  const SOUND_LEVEL = 0.5;
+  const soundLevel = d => SOUND_LEVEL * clamp(20 / Math.max(1, d), 0.55, 1);
   function attachVoice(n) {
     if (!ac || n.voice) return;
     const s = SND[n.type]; if (!s) return;
@@ -1205,8 +1217,10 @@
     const pan = ac.createStereoPanner ? ac.createStereoPanner() : null;
     if (pan) { out.connect(pan); pan.connect(master); } else out.connect(master);
     if (BUF[n.type]) {
-      if (CALLS.has(n.type)) { n.voice = { out, pan, o: null, real: true, call: true, nodes: [], wasOn: false, busyUntil: 0 }; return; }
-      const src = ac.createBufferSource(); src.buffer = BUF[n.type]; src.loop = true; src.connect(out); src.start(0, Math.random() * BUF[n.type].duration);
+      if (CALLS.has(n.type)) { n.voice = { out, pan, o: null, real: true, call: true, nodes: [], wasOn: false, first: true, busyUntil: 0 }; return; }
+      // loops start at the top of the file (the sound begins straight away) and at full level
+      const src = ac.createBufferSource(); src.buffer = BUF[n.type]; src.loop = true; src.connect(out); src.start(0);
+      out.gain.value = soundLevel(distDev(n.x, n.y));
       n.voice = { out, pan, o: null, real: true, nodes: [src] }; return;
     }
     const o = ac.createOscillator(); o.type = s.w; o.frequency.value = s.f(0);
@@ -1231,21 +1245,21 @@
       if (!n.voice) attachVoice(n);
       const v = n.voice; if (!v) continue;
       const p = pattern(n), dd = Math.max(1, distDev(n.x, n.y));
-      const lvl = NOISES[n.type].L10 - 20 * Math.log10(dd / 10) + p;
-      const full = NOISES[n.type].L10 - 20 * Math.log10(dd / 10);
+      const lvl = soundLevel(dd);
       const on = p > -20;
       let amp;
       if (v.call) {
-        // play the recording once each time the noise starts up (not again while it is still playing)
-        if (on && !v.wasOn && t >= v.busyUntil) {
+        // play the recording the moment the noise appears, then once each time it starts up again (not while it is still playing)
+        if ((v.first || (on && !v.wasOn)) && t >= v.busyUntil) {
+          v.first = false; v.out.gain.cancelScheduledValues(t); v.out.gain.setValueAtTime(lvl, t);
           const src = ac.createBufferSource(); src.buffer = BUF[n.type]; src.connect(v.out); src.start();
           v.nodes.push(src); if (v.nodes.length > 4) v.nodes.shift();
           v.busyUntil = t + BUF[n.type].duration * 0.85;
         }
         v.wasOn = on;
-        amp = clamp(Math.pow(10, (full - 78) / 20), 0, 0.8);
-      } else if (v.real) amp = (on || n.type !== 'drill') ? clamp(Math.pow(10, (full - 78) / 20), 0, 0.8) : 0;
-      else amp = !on ? 0 : clamp(Math.pow(10, (lvl - 80) / 20), 0, 0.6);
+        amp = lvl;
+      } else if (v.real) amp = (on || n.type !== 'drill') ? lvl : 0;
+      else amp = on ? lvl : 0;
       v.out.gain.setTargetAtTime(amp, t, 0.03);
       if (v.o) v.o.frequency.setTargetAtTime(SND[n.type].f(n.age + n.phase), t, 0.02);
       if (v.pan) v.pan.pan.setTargetAtTime(clamp((n.x - DEV.x) / 50, -1, 1) * 0.85, t, 0.08);

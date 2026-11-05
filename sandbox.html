@@ -435,8 +435,10 @@
     rain:     { name: 'Rain cloud',   icon: '🌧️', cls: 'weather',     c: 'weather',     L10: 0,  tonal: 0 },
   };
   const NOISE_ART = { dog: 'assets/dog.webp', cat: 'assets/cat.webp', squirrel: 'assets/squirrel.webp', owl: 'assets/owl.webp', taxi: 'assets/taxi.webp', vuvuzela: 'assets/vuvuzela.webp', frog: 'assets/frog.webp', mosquito: 'assets/mosquito.webp', hadeda: 'assets/hadeda.webp', rooster: 'assets/rooster.webp' };
-  const NOISE_SOUNDS = { dog: 'assets/dog.mp3', cat: 'assets/cat.mp3', squirrel: 'assets/squirrel.mp3', owl: 'assets/owl.mp3', taxi: 'assets/taxi.mp3', drill: 'assets/drill.mp3', alarm: 'assets/alarm.mp3', frog: 'assets/frog.mp3', mosquito: 'assets/mosquito.mp3', rooster: 'assets/rooster.mp3' };
+  const NOISE_SOUNDS = { dog: 'assets/dog.mp3', cat: 'assets/cat.mp3', squirrel: 'assets/squirrel.mp3', owl: 'assets/owl.mp3', taxi: 'assets/taxi.mp3', boombox: 'assets/boombox.mp3', vuvuzela: 'assets/vuvuzela.mp3', hadeda: 'assets/hadeda.mp3', drill: 'assets/drill.mp3', alarm: 'assets/alarm.mp3', frog: 'assets/frog.mp3', mosquito: 'assets/mosquito.mp3', rooster: 'assets/rooster.mp3' };
   const CALLS = new Set(['dog', 'cat', 'squirrel', 'owl', 'taxi', 'rooster', 'hadeda']);   // played once each time the noise starts; the rest loop
+  // download the recordings as the page opens, so they are ready to decode on the first tap
+  const RAW = {}; for (const [k, v] of Object.entries(NOISE_SOUNDS)) RAW[k] = fetch(v).then(r => r.ok ? r.arrayBuffer() : null).catch(() => null);
   const CLS_NAME = { dog: 'dog', music: 'music', engine: 'engine', alarm: 'alarm', power_tools: 'power tools', voices: 'voices', weather: 'weather', unknown: 'unknown', background: 'background', quiet: 'quiet' };
   const RAIN_dBA = 53;
 
@@ -952,8 +954,9 @@
       master.connect(comp); comp.connect(out);
       noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
       const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-      for (const [k, v] of Object.entries(NOISE_SOUNDS)) {
-        fetch(v).then(r => r.arrayBuffer()).then(a => ac.decodeAudioData(a)).then(b => {
+      for (const [k, raw] of Object.entries(RAW)) {
+        raw.then(a => a && ac.decodeAudioData(a.slice(0))).then(b => {
+          if (!b) return;
           BUF[k] = b;
           // a noise already on the street switches from the synthesised stand-in to the recording
           if (state.sound) for (const s of state.sources) if (s.type === k && s.voice && !s.voice.real) { detachVoice(s); attachVoice(s); }
@@ -964,6 +967,10 @@
     if (state.sound) for (const s of state.sources) attachVoice(s);
     return true;
   }
+  // Every recording is levelled to the same loudness (-16 LUFS), so each noise plays equally loud;
+  // distance only softens it a little (at most about 5 dB), and a noise behind the house a bit more.
+  const SOUND_LEVEL = 0.5;
+  const soundLevel = (d, behind) => SOUND_LEVEL * clamp(20 / Math.max(1, d), 0.55, 1) * (behind ? 0.6 : 1);
   function attachVoice(s) {
     if (!ac || s.voice) return;
     const out = ac.createGain(); out.gain.value = 0;
@@ -977,8 +984,10 @@
       s.voice = { out, pan, nodes: [n, f, f2, g] }; return;
     }
     if (BUF[s.type]) {
-      if (CALLS.has(s.type)) { s.voice = { out, pan, real: true, call: true, nodes: [], wasOn: false, busyUntil: 0 }; return; }
-      const src = ac.createBufferSource(); src.buffer = BUF[s.type]; src.loop = true; src.connect(out); src.start(0, Math.random() * BUF[s.type].duration);
+      if (CALLS.has(s.type)) { s.voice = { out, pan, real: true, call: true, nodes: [], wasOn: false, first: true, busyUntil: 0 }; return; }
+      // loops start at the top of the file (the sound begins straight away) and at full level
+      const src = ac.createBufferSource(); src.buffer = BUF[s.type]; src.loop = true; src.connect(out); src.start(0);
+      out.gain.value = soundLevel(s.g ? s.g.d : 20, s.g && s.g.behind);
       s.voice = { out, pan, real: true, nodes: [src] }; return;
     }
     const d = SND[s.type];
@@ -1003,19 +1012,21 @@
       if (s.type === 'rain') { v.out.gain.setTargetAtTime(0.25, t, 0.1); continue; }
       if (!s.g) continue;
       const p = pattern(s, simT);
-      const full = TYPES[s.type].L10 - 20 * Math.log10(s.g.d / 10) - (s.g.behind ? 12 : 0);
+      const lvl = soundLevel(s.g.d, s.g.behind);
       const on = p > -20;
       let amp;
       if (v.call) {
-        if (on && !v.wasOn && t >= v.busyUntil) {
+        // play the recording the moment the noise is placed, then once each time it starts up again
+        if ((v.first || (on && !v.wasOn)) && t >= v.busyUntil) {
+          v.first = false; v.out.gain.cancelScheduledValues(t); v.out.gain.setValueAtTime(lvl, t);
           const src = ac.createBufferSource(); src.buffer = BUF[s.type]; src.connect(v.out); src.start();
           v.nodes.push(src); if (v.nodes.length > 4) v.nodes.shift();
           v.busyUntil = t + BUF[s.type].duration * 0.85;
         }
         v.wasOn = on;
-        amp = clamp(Math.pow(10, (full - 78) / 20), 0, 0.8);
-      } else if (v.real) amp = (on || s.type !== 'drill') ? clamp(Math.pow(10, (full - 78) / 20), 0, 0.8) : 0;
-      else amp = !on ? 0 : clamp(Math.pow(10, (full + p - 80) / 20), 0, 0.6);
+        amp = lvl;
+      } else if (v.real) amp = (on || s.type !== 'drill') ? lvl : 0;
+      else amp = on ? lvl : 0;
       v.out.gain.setTargetAtTime(amp, t, 0.03);
       if (v.o) v.o.frequency.setTargetAtTime(SND[s.type].f(simT + s.phase), t, 0.02);
       if (v.pan) v.pan.pan.setTargetAtTime(clamp((s.x - DEV.x) / 50, -1, 1) * 0.85, t, 0.08);
