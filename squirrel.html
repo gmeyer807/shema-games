@@ -1081,14 +1081,17 @@
       master.connect(comp); comp.connect(out);
       noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
       const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-      for (const k of ['squirrel', 'cat', 'taxi', 'owl', 'alarm'])
+      for (const k of ['squirrel', 'cat', 'taxi', 'owl', 'hadeda'])
         fetch(`assets/${k}.mp3`).then(r => r.arrayBuffer()).then(a => ac.decodeAudioData(a)).then(b => { BUF[k] = b; }).catch(() => { });
     }
     if (ac.state === 'suspended') ac.resume();
     return true;
   }
   const live = () => sound.on && ac && !paused;
-  function play(k, vol = 0.6, rate = 1, max = 0) {
+  // Same levels as Let Grandma Sleep and the Sandbox: every recording is levelled to -16 LUFS and plays
+  // at SOUND_LEVEL up close, never below FAR of that, and always at its natural pitch.
+  const SOUND_LEVEL = 0.5, FAR = 0.55;
+  function play(k, vol = SOUND_LEVEL, rate = 1, max = 0) {
     if (!live() || !BUF[k]) return false;
     const s = ac.createBufferSource(), g = ac.createGain(); s.buffer = BUF[k]; s.playbackRate.value = rate; g.gain.value = vol;
     s.connect(g); g.connect(master); s.start();
@@ -1096,7 +1099,7 @@
     if (max) { const t = ac.currentTime; g.gain.setValueAtTime(vol, t + max - 0.3); g.gain.linearRampToValueAtTime(0, t + max); s.stop(t + max + 0.05); }
     return true;
   }
-  function tone(f, at, dur, type = 'sine', vol = 0.15, f2) {
+  function tone(f, at, dur, type = 'sine', vol = 0.18, f2) {
     if (!live()) return;
     const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t + at);
     if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + at + dur);
@@ -1111,14 +1114,14 @@
     s.connect(f); f.connect(g); g.connect(master); s.start(t, Math.random()); s.stop(t + 0.2);
   }
   const sfx = {
-    jump() { if (Math.random() < 0.18) play('squirrel', 0.25, 1.1); else tone(520, 0, 0.08, 'triangle', 0.05, 760); },
+    jump() { if (Math.random() < 0.18) play('squirrel', SOUND_LEVEL * FAR); else tone(520, 0, 0.08, 'triangle', 0.05, 760); },
     land(L, kind) { const v = clamp((L - 30) / 40, 0.05, 1) * 0.5; if (kind === 'tin') { thump(v, 2600); tone(180, 0, 0.12, 'square', v * 0.2, 140); } else if (kind === 'tree') thump(v * 0.5, 700); else thump(v, 1200); },
-    acorn() { tone(880, 0, 0.07, 'triangle', 0.1); tone(1320, 0.05, 0.1, 'triangle', 0.1); },
+    acorn() { tone(660, 0, 0.12, 'triangle'); tone(990, 0.07, 0.18, 'triangle'); },   // the same chime as catching a noise in Grandma
     paws() { [660, 880, 1100].forEach((f, i) => tone(f, i * 0.07, 0.25, 'sine', 0.1)); },
-    cat() { if (!play('cat', 0.7, 1.2)) tone(700, 0, 0.4, 'sawtooth', 0.12, 1200); },
-    squawk() { tone(560, 0, 0.18, 'sawtooth', 0.14, 380); tone(560, 0.22, 0.2, 'sawtooth', 0.14, 360); },
-    taxi() { if (!play('taxi', 0.5)) { tone(466, 0, 0.15, 'square', 0.1); tone(466, 0.22, 0.15, 'square', 0.1); } },
-    caught() { if (!play('alarm', 0.35, 1, 3)) { tone(520, 0, 0.25, 'square', 0.12); tone(390, 0.22, 0.4, 'square', 0.12); } },
+    cat() { if (!play('cat')) tone(700, 0, 0.4, 'sawtooth', 0.12, 1200); },
+    squawk() { if (!play('hadeda')) { tone(560, 0, 0.18, 'sawtooth', 0.14, 380); tone(560, 0.22, 0.2, 'sawtooth', 0.14, 360); } },
+    taxi() { if (!play('taxi')) { tone(466, 0, 0.15, 'square', 0.1); tone(466, 0.22, 0.15, 'square', 0.1); } },
+    caught() { tone(520, 0, 0.25, 'square', 0.12); tone(390, 0.22, 0.4, 'square', 0.12); },   // the same sting as Grandma waking up
     fall() { tone(600, 0, 0.6, 'triangle', 0.15, 120); },
   };
   let nextOwl = 12, lockBeep = 0;
@@ -1134,7 +1137,7 @@
       rainNode.g.gain.setTargetAtTime(0.22 * W.rain, ac.currentTime, 0.2);
     } else if (rainNode) { rainNode.g.gain.setTargetAtTime(0, ac.currentTime, 0.2); if (W.rain <= 0.02) { const r = rainNode; setTimeout(() => { try { r.s.stop(); } catch (e) { } }, 600); rainNode = null; } }
     if (mode === 'play') {
-      nextOwl -= dt; if (nextOwl <= 0) { play('owl', 0.12); nextOwl = rnd(16, 26); }
+      nextOwl -= dt; if (nextOwl <= 0) { play('owl', SOUND_LEVEL * FAR); nextOwl = rnd(16, 26); }
       // rising beeps while Shema locks on
       if (W.lock > 0.15) { lockBeep -= dt; if (lockBeep <= 0) { tone(700 + W.lock * 700, 0, 0.05, 'square', 0.05); lockBeep = 0.32 - W.lock * 0.22; } }
     }

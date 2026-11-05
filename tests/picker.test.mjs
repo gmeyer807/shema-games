@@ -184,6 +184,8 @@ for (const g of [{ key: 'grandma', tile: '#tileGrandma', name: 'Let Grandma Slee
       const p = h.page;
       await p.locator(g.tile).click();
       await gameFrame(p).locator('#btnMode').waitFor();
+      // let the first load finish (pictures included) so the reload below doesn't cut any downloads short
+      await p.locator('#game').evaluate(f => f.contentDocument.readyState === 'complete' || new Promise(r => f.addEventListener('load', r, { once: true })));
       // reload the game inside the frame with its test hooks switched on, then end it at once
       await p.locator('#game').evaluate(f => { f.src = f.src.split('#')[0] + '#test'; f.contentWindow.location.reload(); });
       await p.waitForFunction(() => { const w = document.getElementById('game').contentWindow; return w.__g || w.__r; });

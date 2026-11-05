@@ -374,11 +374,11 @@
   // ============================================================
   // A list of pictures for one state takes turns, like a slow animation.
   const GRANDMA_ART = {
-    sleep: [1, 2, 3, 4].map(i => `assets/grandma_sleep${i}.webp`),
-    stir: [1, 2, 3, 4].map(i => `assets/grandma_stir${i}.webp`),
-    awake: [1, 2, 3].map(i => `assets/grandma_awake${i}.webp`),   // frame 4 has a different background, so it is left out of the loop
+    sleep: Array.from({ length: 12 }, (_, i) => `assets/grandma_sleep${i + 1}.webp`),
+    stir: Array.from({ length: 12 }, (_, i) => `assets/grandma_stir${i + 1}.webp`),
+    awake: Array.from({ length: 12 }, (_, i) => `assets/grandma_awake${i + 1}.webp`),
   };
-  const GRANDMA_FRAME_S = { sleep: 0.6, stir: 0.28, awake: 0.22 };   // seconds each picture stays
+  const GRANDMA_FRAME_S = { sleep: 0.26, stir: 0.16, awake: 0.13 };   // seconds each picture stays
 
   // NOISE SPRITES: a file name per noise: a horizontal strip of 6 square frames facing right
   // (or { src, frames, fps } for another count). Empty = the emoji is used.
