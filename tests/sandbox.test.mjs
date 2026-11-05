@@ -339,3 +339,80 @@ for (const vp of [{ width: 375, height: 740, name: 'phone upright' }, { width: 7
     } finally { await h.close(); }
   });
 }
+
+// ---- Real firmware: the device's own algorithms (shema-engine.wasm) on what its four mics would hear ----
+/** Opens the street, switches to the firmware and waits for it; then an empty, paused street. */
+async function realStreet(page) {
+  await openStreet(page);
+  await page.locator('#btnReal').click();
+  await page.waitForFunction(() => ['ready', 'failed'].includes(__s.ENG.state), null, { timeout: 30000 });
+  assert.equal(await page.evaluate(() => __s.ENG.error || __s.ENG.state), 'ready');
+  await page.evaluate(() => { __shemaPause(true); for (const s of [...__s.state.sources]) __s.removeSource(s); __s.state.events.length = 0; });
+}
+/** Runs the street and the firmware, 32 ms buffer by 32 ms buffer, for s seconds. */
+const runReal = (page, s) => page.evaluate(s => { let acc = 0; for (let i = 0; i < s * 30; i++) { __s.step(1 / 30); acc += 1 / 30; while (acc >= 0.032) { __s.engStep(); acc -= 0.032; } } }, s);
+const reading = page => page.evaluate(() => { const r = __s.currentReading(); const s = __s.state.sources.find(x => x.type !== 'rain'); return { r, truth: s && s.g ? s.g.b : null, open: __s.ENG.open, top: __s.ENG.top, events: __s.state.events.map(e => ({ cls: e.cls, bearing: e.bearing, weather: e.weather })) }; });
+
+test('real firmware: loads, passes the firmware\'s own self-test, and finds a barking dog\'s direction and class', async () => {
+  const h = await sandbox();
+  try {
+    const p = h.page;
+    await realStreet(p);
+    assert.equal(await p.evaluate(() => __s.ENG.selftest), 0, 'every layer of the int8 network matches the Python reference');
+    assert.equal(await p.locator('#btnReal').getAttribute('aria-pressed'), 'true');
+    assert.match(await p.locator('#simNote').textContent(), /Real firmware/);
+    await runReal(p, 2);
+    assert.equal(await p.evaluate(() => __s.ENG.open), false, 'a quiet street opens nothing');
+    await p.evaluate(() => __s.addSource('dog', 44, 48));
+    await runReal(p, 8);
+    const x = await reading(p);
+    assert.equal(x.open, true, 'the barking opens a detection');
+    assert.ok(x.r.located, 'and the firmware is sure of a direction');
+    assert.ok(Math.abs(x.r.bearing - x.truth) < 6, `bearing ${x.r.bearing} vs ${x.truth}`);
+    assert.equal(x.r.cls, 'dog');
+    assert.equal(x.events[0].cls, 'dog');
+    assert.ok(Math.abs(x.events[0].bearing - x.truth) < 6);
+    assert.deepEqual(h.problems, []);
+  } finally { await h.close(); }
+});
+
+test('real firmware: rain is weather and lifts the background; a car alarm in it is still caught, located and flagged', async () => {
+  const h = await sandbox();
+  try {
+    const p = h.page;
+    await realStreet(p);
+    await runReal(p, 2);
+    await p.evaluate(() => __s.addSource('rain', 55, 30));
+    await runReal(p, 12);
+    let x = await reading(p);
+    assert.equal(x.top.cls, 'weather');
+    assert.ok(!x.events.some(e => e.cls !== 'weather'), 'rain alone makes no other event');
+    assert.ok(await p.evaluate(() => __s.ENG.ambient > 48), 'the ambient rises with the rain');
+    await p.evaluate(() => __s.addSource('alarm', 70, 48));
+    await runReal(p, 8);
+    x = await reading(p);
+    assert.equal(x.open, true);
+    assert.equal(x.r.cls, 'alarm');
+    assert.ok(Math.abs(x.r.bearing - x.truth) < 6, `bearing ${x.r.bearing} vs ${x.truth}`);
+    assert.equal(x.events[0].weather, true, 'flagged as heard in rain');
+    assert.deepEqual(h.problems, []);
+  } finally { await h.close(); }
+});
+
+test('real firmware: back to Simulated, and the street runs on the quick model again', async () => {
+  const h = await sandbox();
+  try {
+    const p = h.page;
+    await realStreet(p);
+    await p.evaluate(() => __s.addSource('dog', 44, 48));
+    await runReal(p, 4);
+    await p.locator('#btnSim').click();
+    assert.equal(await p.locator('#btnSim').getAttribute('aria-pressed'), 'true');
+    assert.equal(await p.evaluate(() => __s.ENG.on), false);
+    assert.doesNotMatch(await p.locator('#simNote').textContent(), /Real firmware/);
+    await run(p, 4);
+    const r = await p.evaluate(() => { const r = __s.currentReading(); return r && { real: !!r.real, type: r.s && r.s.type }; });
+    assert.deepEqual(r, { real: false, type: 'dog' });
+    assert.deepEqual(h.problems, []);
+  } finally { await h.close(); }
+});

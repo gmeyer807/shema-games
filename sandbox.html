@@ -134,6 +134,14 @@
   @keyframes blink { 50% { opacity: .2; } }
   .status .clock { margin-left: auto; font-size: 20px; font-weight: 500; color: var(--text-0); }
 
+  /* which algorithms Shema runs: the quick stand-in, or the firmware's own (shema-engine.wasm) */
+  .engine .seg { display: flex; width: 100%; }
+  .engine .seg button { flex: 1; min-height: 32px; font-size: 12px; }
+  .engine .sub { font-size: 12px; color: var(--text-2); line-height: 1.45; }
+  .engine .sub b { color: var(--text-1); font-weight: 600; }
+  .engine.real { border-color: var(--amber); box-shadow: 0 0 0 3px var(--amber-glow); }
+  .engine .bad { color: var(--red); }
+
   .lvl-row { display: flex; align-items: baseline; gap: 8px; }
   .lvl-big { font-size: 44px; font-weight: 700; letter-spacing: -.03em; line-height: 1; }
   .lvl-unit { font-family: var(--mono); font-size: 12px; color: var(--text-2); }
@@ -363,6 +371,14 @@
 
 
   <aside class="panel" aria-live="polite">
+    <div class="card engine" id="engCard">
+      <div class="lbl">Shema's algorithms<span class="r num" id="engNote">simulated</span></div>
+      <div class="seg" role="group" aria-label="Which algorithms Shema runs">
+        <button id="btnSim" type="button" aria-pressed="true">Simulated</button>
+        <button id="btnReal" type="button" aria-pressed="false">Real firmware</button>
+      </div>
+      <div class="sub" id="engSub">Quick rules of thumb stand in for Shema. Switch to <b>Real firmware</b> to run the device's own level meter, direction finding and neural network on the four microphone signals of this street.</div>
+    </div>
     <div class="card status">
       <span class="pill" id="pill"><span class="dot"></span><span id="pillText">LISTENING</span></span>
       <span class="clock num" id="clock">14:00:00</span>
@@ -412,7 +428,7 @@
       <div class="events" id="events"><div class="empty">No events yet. Shema keeps one record per disturbance, even if it stops and starts.</div></div>
     </div>
 
-    <div class="note">A simplified simulation for fun: sound drops 6 dB each time the distance doubles, the house wall blocks 12 dB from behind, and limits follow SANS 10103 for a suburban district (day 50, night 40 dB(A)). The real Shema does this on an STM32 with four microphones.</div>
+    <div class="note" id="simNote">A simplified simulation for fun: sound drops 6 dB each time the distance doubles, the house wall blocks 12 dB from behind, and limits follow SANS 10103 for a suburban district (day 50, night 40 dB(A)). The real Shema does this on an STM32 with four microphones.</div>
   </aside>
 </div>
 
@@ -526,6 +542,11 @@
     }
     state.lasE = state.lasE + (total - state.lasE) * Math.min(1, a * 1.5);
     state.las = e2db(state.lasE);
+    if (ENG.on) {   // the firmware measures, locates and detects (engStep); the sources above only set what its mics hear
+      state.loud = null;
+      if (ENG.state === 'ready') { state.las = ENG.las; state.ambient = ENG.ambient; }
+      return;
+    }
     state.loud = best && best.las >= state.ambient + 4 ? best : (best && state.det.open ? best : null);
 
     // ---- detection: opens at ambient + 7, holds at ambient + 4, 2 s post-roll ----
@@ -545,6 +566,7 @@
   }
 
   function currentReading() {
+    if (ENG.on) return engReading();
     const s = state.loud;
     if (!s) return null;
     const bearing = clamp(s.g.b + s.bErr, 0, 180);
@@ -588,8 +610,8 @@
     ev.peak = Math.max(ev.peak, state.las);
     if (raining) ev.weather = true;
     if (r) {
-      if (ev.cls === 'unknown') ev.cls = r.cls;
-      if (r.cls === ev.cls) { ev.bearing = r.bearing; ev.rating = Math.max(ev.rating, r.rating); }
+      if (ev.cls === 'unknown' || (r.real && (ev.cls === 'background' || ev.cls === 'weather'))) ev.cls = r.cls;
+      if (r.cls === ev.cls) { if (!r.real || r.located) ev.bearing = r.bearing; ev.rating = Math.max(ev.rating, r.rating); }
     }
     ev.verdict = ev.cls === 'unknown' ? null : judge(ev.cls, ev.rating);
   }
@@ -775,8 +797,8 @@
   }
   function drawRay(now) {
     const r = state.det.open ? currentReading() : null;
-    if (!r) return;
-    const x = sx(DEV.x), y = sy(DEV.y), a = r.bearing * Math.PI / 180, L = Math.min(RANGE, r.s.g.d) * K;
+    if (!r || (r.real && !r.located)) return;
+    const x = sx(DEV.x), y = sy(DEV.y), a = r.bearing * Math.PI / 180, L = (r.real ? RANGE : Math.min(RANGE, r.s.g.d)) * K;
     ctx.save();
     const spread = clamp(r.err, 1, 9) * Math.PI / 180;
     ctx.fillStyle = T['amber']; ctx.globalAlpha = 0.16;
@@ -932,6 +954,7 @@
   // ================= day / night =================
   const btnDay = document.getElementById('btnDay'), btnNight = document.getElementById('btnNight');
   function setNight(n) {
+    if (state.det.open) { closeDetection(); ENG.open = false; }   // the clock jumps: whatever was going on ends here
     state.night = n; state.clock = n ? 23 * 3600 : 14 * 3600;
     btnDay.setAttribute('aria-pressed', String(!n)); btnNight.setAttribute('aria-pressed', String(n));
     eventsDirty = true;
@@ -1108,7 +1131,14 @@
     $('limTxt').textContent = limit();
 
     // direction + source
-    if (r) {
+    if (r && r.real) {
+      $('dirVal').textContent = r.located ? Math.round(r.bearing) + '°' : '—';
+      $('dirSub').textContent = r.bearing == null ? 'finding the direction\u2026' : r.located ? `${Math.round(r.pconf * 100)} % sure` : `unsure (${Math.round(r.pconf * 100)} %)`;
+      drawDial(r.located ? r.bearing : null);
+      const c = chipHtml(r.cls); if (c !== lastChip) { $('srcChip').innerHTML = c; lastChip = c; }
+      $('confBar').style.width = r.conf + '%'; $('confBar').style.setProperty('--c', `var(--cls-${r.cls})`);
+      $('confTxt').textContent = !ENG.windows.length ? 'listening for 2 s\u2026' : `${Math.round(r.conf)} % in the last 2 s` + (ENG.top.cls !== r.cls ? ` (${CLS_NAME[ENG.top.cls] || ENG.top.cls} ${Math.round(ENG.top.p * 100)} %)` : '');
+    } else if (r) {
       $('dirVal').textContent = Math.round(r.bearing) + '°';
       $('dirSub').textContent = `±${Math.round(r.err + 1)}° · ${Math.round(r.s.g.d)} m away`;
       drawDial(r.bearing);
@@ -1139,13 +1169,16 @@
       const v = judge(r.cls, r.rating);
       head.className = 'verdict-h ' + (v.disturbing ? 'bad' : 'ok');
       head.textContent = v.disturbing ? 'Disturbing noise' : 'Within the limit';
-      const tonal = TYPES[r.s.type].tonal ? ` (incl. +${TYPES[r.s.type].tonal} dB for its tone)` : '';
+      const tonalDb = r.real ? r.tonal : TYPES[r.s.type].tonal;
+      const tonal = tonalDb ? ` (incl. +${tonalDb} dB for its tone)` : '';
       l1.innerHTML = `Rating <b>${r.rating.toFixed(1)}</b>${tonal} ${v.disturbing ? '>' : '≤'} acceptable <b>${v.acc.toFixed(1)}</b> dB(A), the ${state.night ? 'night' : 'day'} limit or the ambient, whichever is higher.`;
       l2.innerHTML = (v.nuisance ? `<b style="color: var(--amber)">Nuisance:</b> ${v.nuisance}. ` : '') + `It is <b>${(r.rating - state.ambient).toFixed(1)} dB</b> over the ambient.`;
     }
 
     if (eventsDirty || open) renderEvents();
+    if (ENG.on && ENG.state === 'ready' && ++engUiTick % 10 === 0) engUi();
   }
+  let engUiTick = 0;
   function renderEvents() {
     eventsDirty = false;
     const list = $('events');
@@ -1185,6 +1218,229 @@
   });
   showSlide(0, 1);
 
+  // ================= real firmware =================
+  // shema-engine.wasm is the device's own a_weighting.c, doa_srp.c, classifier_mel.c and int8 mel-CNN, built
+  // unchanged for the browser (engine/). Here the page makes what Shema's four mics would hear on this street
+  // (the same recordings you hear, delayed and scaled to each mic) and hands it over one 32 ms buffer at a time.
+  // The firmware measures the level, finds the direction and names the class; the page decides when a detection
+  // opens and closes, with the threshold detector's rules (ambient + 7 dB opens, + 4 dB holds, 2 s post-roll,
+  // a background close after 5 windows of background), and gives the verdict.
+  const SIM_NOTE = document.getElementById('simNote').textContent;
+  const ENG = {
+    on: false, state: 'off',               // off | loading | ready | failed
+    E: null, mem: null, rec: {}, recDb: {}, classes: [], micX: [], cal: 120,
+    n: 0, acc: 0, buf: null,
+    amb: null, ambDb: 0, rain: null, rainDb: 0,
+    las: 45, laeq: 45, ambient: 45, ambSeed: 0, open: false, quiet: 0, lasLog: [],
+    point: null, probs: null, top: null, windows: [], ms: 0, msN: 0, selftest: null,
+  };
+  const FS = 48000, BUF_N = 1536, BUF_S = BUF_N / FS, MIC_Z = 1.5;   // sources about 1.5 m below the board
+  const ENG_TONAL = { music: 5, alarm: 5, engine: 5 };               // the Sandbox's tonal corrections, by class
+  const ENG_SURE = 0.5;                                              // a class counts from 50 %, below = unknown
+  function engStr(p) { const b = new Uint8Array(ENG.mem.buffer, p); let s = ''; for (let k = 0; b[k]; k++) s += String.fromCharCode(b[k]); return s; }
+  function engMeasure(x) {   // A-weighted level of a float signal, in dB re full scale 1.0, through the firmware's A filter
+    const E = ENG.E; E.engine_measure_begin();
+    for (let i = 0; i < x.length; i += BUF_N) {
+      const n = Math.min(BUF_N, x.length - i);
+      new Float32Array(ENG.mem.buffer, E.engine_scratch(), n).set(x.subarray(i, i + n));
+      E.engine_measure_add(n);
+    }
+    return E.engine_measure_end();
+  }
+  function noise(len, lowpass, seed) {   // seeded so every visit hears the same street
+    let r = seed >>> 0, y = 0; const out = new Float32Array(len);
+    for (let i = 0; i < len; i++) { r = (r * 1664525 + 1013904223) >>> 0; const w = r / 2147483648 - 1; y += lowpass * (w - y); out[i] = lowpass < 1 ? y : w; }
+    return out;
+  }
+  async function engLoad() {
+    if (ENG.state === 'loading' || ENG.state === 'ready') return;
+    ENG.state = 'loading'; engUi();
+    try {
+      const bytes = await (await fetch('shema-engine.wasm')).arrayBuffer();
+      const inst = await WebAssembly.instantiate(await WebAssembly.compile(bytes), {});
+      const E = ENG.E = inst.exports; ENG.mem = E.memory;
+      if (E._initialize) E._initialize();
+      const t0 = performance.now();
+      ENG.selftest = E.engine_init();      // 0 = the firmware's own self-test passed: every layer of 2 windows matches the Python reference
+      ENG.initMs = performance.now() - t0;
+      if (ENG.selftest !== 0) throw new Error('self-test ' + ENG.selftest);
+      ENG.classes = [...Array(E.engine_classes())].map((_, i) => engStr(E.engine_class_name(i)));
+      ENG.micX = [...new Float32Array(ENG.mem.buffer, E.engine_mic_x_mm(), 4)].map(v => v / 1000);
+      ENG.cal = E.engine_cal_db();
+      // the recordings at the mics' 48 kHz
+      const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+      await Promise.all(Object.keys(NOISE_SOUNDS).map(async k => {
+        const raw = await RAW[k]; if (!raw || !AC) return;
+        const b = await new AC(1, 1, FS).decodeAudioData(raw.slice(0));
+        const x = b.getChannelData(0).slice();
+        ENG.rec[k] = x; ENG.recDb[k] = engMeasure(x);
+      }));
+      // the background: four independent, softly coloured noises (one per mic), and a hiss for rain
+      ENG.amb = [0, 1, 2, 3].map(m => noise(FS * 3, 0.25, 11 + m)); ENG.ambDb = engMeasure(ENG.amb[0]);
+      ENG.rain = [0, 1, 2, 3].map(m => noise(FS * 3, 1, 101 + m)); ENG.rainDb = engMeasure(ENG.rain[0]);
+      ENG.buf = new Int32Array(ENG.mem.buffer, E.engine_buffer(), BUF_N * 4);
+      ENG.state = 'ready';
+    } catch (e) {
+      ENG.state = 'failed'; ENG.error = String(e && e.message || e);
+    }
+    engUi();
+  }
+
+  // the four mic signals of the next 32 ms
+  function engSynth() {
+    const buf = ENG.buf, n0 = ENG.n, mics = ENG.micX;
+    buf.fill(0);
+    const acc = new Float32Array(BUF_N * 4);
+    const add = (x, gain, m, delay) => {     // one signal into one mic, delayed by a fraction of a sample
+      const len = x.length;
+      for (let i = 0; i < BUF_N; i++) {
+        const t = n0 + i - delay; if (t < 0) continue;
+        const k = Math.floor(t), f = t - k, a = x[k % len], b = x[(k + 1) % len];
+        acc[i * 4 + m] += (a + (b - a) * f) * gain;
+      }
+    };
+    const toGain = (dBA, measuredDb) => Math.pow(10, (dBA - ENG.cal - measuredDb) / 20);
+    // background: different noise at each mic, so it has no direction
+    const ambG = toGain(baseAmbient(), ENG.ambDb);
+    for (let m = 0; m < 4; m++) add(ENG.amb[m], ambG, m, -m * 9973);
+    if (state.sources.some(s => s.type === 'rain')) { const g = toGain(RAIN_dBA, ENG.rainDb); for (let m = 0; m < 4; m++) add(ENG.rain[m], g, m, -m * 7919); }
+    const tNow = n0 / FS;
+    for (const s of state.sources) {
+      const x = ENG.rec[s.type]; if (!x || !s.g) continue;
+      const T = TYPES[s.type], L = T.L10 - 20 * Math.log10(s.g.d / 10) - (s.g.behind ? 12 : 0);
+      const g = toGain(L, ENG.recDb[s.type]);
+      // when the recording plays: the same as what you hear (updateAudio)
+      const on = pattern(s, simT) > -20;
+      const r = s.rt || (s.rt = { start: n0, busy: 0, was: false, first: true });
+      let gate = 1;
+      if (CALLS.has(s.type)) {
+        if ((r.first || (on && !r.was)) && tNow >= r.busy) { r.first = false; r.start = n0; r.busy = tNow + x.length / FS * 0.85; }
+        r.was = on;
+        if (n0 - r.start > x.length) continue;          // finished: silent until it starts again
+      } else if (s.type === 'drill' && !on) gate = 0;
+      if (!gate) continue;
+      const src = s.rt.start;
+      for (let m = 0; m < 4; m++) {
+        const dx = s.x - (DEV.x + mics[m]), dy = DEV.y - s.y;   // metres; the mic line runs along the wall (+x = right)
+        const delay = Math.hypot(dx, dy, MIC_Z) / 343 * FS;
+        // the recording starts at src (looped ones play on): sample index t - src
+        const len = x.length;
+        for (let i = 0; i < BUF_N; i++) {
+          const t = n0 + i - delay - src; if (t < 0) continue;
+          if (CALLS.has(s.type) && t >= len - 1) break;
+          const k = Math.floor(t), f = t - k, a = x[k % len], b = x[(k + 1) % len];
+          acc[i * 4 + m] += (a + (b - a) * f) * g;
+        }
+      }
+    }
+    for (let i = 0; i < acc.length; i++) buf[i] = Math.max(-2147483647, Math.min(2147483647, Math.round(acc[i] * 2147483648)));
+    ENG.n += BUF_N;
+  }
+
+  // one 32 ms buffer through the firmware, then the threshold detector's rules
+  function engStep() {
+    const E = ENG.E;
+    engSynth();
+    const t0 = performance.now();
+    const win = E.engine_process(ENG.open ? 1 : 0);
+    ENG.ms += performance.now() - t0; ENG.msN++;
+    const lv = new Float32Array(ENG.mem.buffer, E.engine_levels(), 7);
+    ENG.laeq = lv[0]; ENG.las = lv[1];
+    state.las = ENG.las;
+    // ambient: the street's background (the level monitor learns it over minutes; here over seconds). It starts from
+    // the quieter buffers of the first second (like an LA90), so a noise already going is not learnt as background,
+    // drops quickly into the quiet between barks, and rises only slowly, from buffers no louder than ambient + 7
+    if (ENG.ambSeed < 31) {
+      (ENG.seed || (ENG.seed = [])).push(ENG.laeq); ENG.ambSeed++;
+      const sorted = ENG.seed.slice().sort((a, b) => a - b); ENG.ambient = sorted[Math.floor(sorted.length * 0.1)];
+    } else if (!ENG.open && ENG.laeq < ENG.ambient) ENG.ambient += (ENG.laeq - ENG.ambient) * (BUF_S / 2);
+    else if (!ENG.open && ENG.las <= ENG.ambient + 7) ENG.ambient = e2db(db2e(ENG.ambient) + (db2e(ENG.laeq) - db2e(ENG.ambient)) * (BUF_S / 30));
+    state.ambient = ENG.ambient;
+    ENG.lasLog.push(ENG.las); if (ENG.lasLog.length > 312) ENG.lasLog.shift();     // 10 s
+    if (win) {
+      const p = [...new Float32Array(ENG.mem.buffer, E.engine_probabilities(), ENG.classes.length)];
+      let best = 0; for (let i = 1; i < p.length; i++) if (p[i] > p[best]) best = i;
+      ENG.probs = p; ENG.top = { cls: ENG.classes[best], p: p[best] };
+      if (ENG.open) {
+        ENG.windows.push(ENG.top);
+        for (let i = 0; i < p.length; i++) { ENG.sum[i] += p[i]; ENG.maxp[i] = Math.max(ENG.maxp[i], p[i]); }
+      }
+    }
+    const pt = new Float32Array(ENG.mem.buffer, E.engine_point(), 5);
+    if (pt[0]) ENG.point = { bearing: pt[1], conf: pt[2] };
+    // open at ambient + 7, hold at + 4, close after 2 s below; close as background after 5 sure background windows with a steady level
+    if (ENG.ambSeed < 31) return;
+    if (!ENG.open && ENG.las >= ENG.ambient + 7) { ENG.open = true; ENG.quiet = 0; ENG.point = null; ENG.windows = []; ENG.top = null;
+      ENG.sum = ENG.classes.map(() => 0); ENG.maxp = ENG.classes.map(() => 0); openDetection(); }
+    else if (ENG.open) {
+      ENG.quiet = ENG.las >= ENG.ambient + 4 ? 0 : ENG.quiet + BUF_S;
+      const last5 = ENG.windows.slice(-5);
+      const bg = last5.length === 5 && last5.every(w => (w.cls === 'background' || w.cls === 'weather') && w.p >= 0.6);
+      const spread = Math.max(...ENG.lasLog) - Math.min(...ENG.lasLog);
+      if (bg && spread <= 6) { ENG.open = false; ENG.ambient = ENG.las; closeDetection(); }     // it is the new background: learn it
+      else if (ENG.quiet > 2) { ENG.open = false; closeDetection(); }
+      else updateEvent(state.det.ev, BUF_S, state.sources.some(s => s.type === 'rain'));
+    }
+  }
+
+  // the detection's class: the sound class with the most probability over its 2 s windows that was sure (50 %) in
+  // at least one of them; a dog that barks now and then still leaves some windows of background between barks.
+  // Background or weather only when no sound class ever was.
+  function engClass() {
+    if (!ENG.windows.length) return { cls: 'unknown', p: 0 };
+    let best = -1;
+    ENG.classes.forEach((c, i) => { if (c !== 'background' && c !== 'weather' && ENG.maxp[i] >= ENG_SURE && (best < 0 || ENG.sum[i] > ENG.sum[best])) best = i; });
+    if (best < 0) { const t = ENG.windows[ENG.windows.length - 1]; return { cls: t.p >= ENG_SURE ? t.cls : 'unknown', p: t.p }; }
+    return { cls: ENG.classes[best], p: ENG.probs[best] };
+  }
+  function engReading() {
+    if (!ENG.open) return null;
+    const top = engClass(), cls = top.cls;
+    const tonal = ENG_TONAL[cls] || 0;
+    const pt = ENG.point;
+    return {
+      s: null, real: true, cls, tonal,
+      bearing: pt ? pt.bearing : null, located: !!pt && pt.conf >= 0.3, pconf: pt ? pt.conf : 0,
+      conf: top.p * 100, rating: ENG.las + tonal, snr: ENG.las - ENG.ambient,
+      err: pt ? clamp((1 - pt.conf) * 20, 0, 20) : 20,
+    };
+  }
+
+  function engSet(on) {
+    ENG.on = on;
+    for (const s of state.sources) s.rt = null;
+    if (state.det.open) closeDetection();
+    ENG.open = false; ENG.ambSeed = 0; ENG.seed = []; ENG.lasLog = []; ENG.acc = 0; ENG.point = null; ENG.top = null;
+    if (on && ENG.E) ENG.E.engine_init();
+    if (on) engLoad();
+    engUi();
+  }
+  function engUi() {
+    const real = ENG.on;
+    $('btnSim').setAttribute('aria-pressed', String(!real));
+    $('btnReal').setAttribute('aria-pressed', String(real));
+    $('engCard').classList.toggle('real', real);
+    $('simNote').textContent = real
+      ? 'Real firmware: the street makes what Shema’s four mics (50 mm apart along the wall) would hear, from the same recordings you hear, and the device’s own code measures, locates and classifies it. The Sandbox still opens and closes detections (ambient + 7 dB, learnt in seconds rather than minutes) and gives the verdict.'
+      : SIM_NOTE;
+    const note = $('engNote'), sub = $('engSub');
+    if (!real) {
+      note.textContent = 'simulated';
+      sub.innerHTML = 'Quick rules of thumb stand in for Shema. Switch to <b>Real firmware</b> to run the device’s own level meter, direction finding and neural network on the four microphone signals of this street.';
+    } else if (ENG.state === 'loading') {
+      note.textContent = 'loading…';
+      sub.textContent = 'Loading the firmware and preparing the recordings at 48 kHz…';
+    } else if (ENG.state === 'failed') {
+      note.innerHTML = '<span class="bad">not running</span>';
+      sub.innerHTML = `<span class="bad">The firmware could not start here (${ENG.error}).</span> Switch back to Simulated.`;
+    } else {
+      note.textContent = ENG.msN ? `${(ENG.ms / ENG.msN).toFixed(2)} ms / 32 ms buffer` : 'running';
+      sub.innerHTML = 'The device’s own level meter, SRP-PHAT direction finding and int8 neural network, hearing this street through its 4 mics. Self-test passed.';
+    }
+  }
+  $('btnSim').addEventListener('click', () => { if (ENG.on) engSet(false); });
+  $('btnReal').addEventListener('click', () => { if (!ENG.on) engSet(true); });
+
   // ================= loop =================
   let last = performance.now(), lastUi = 0;
   let paused = false;
@@ -1194,6 +1450,11 @@
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
     if (paused) return;
     step(dt);
+    if (ENG.on && ENG.state === 'ready') {
+      ENG.acc += dt;
+      for (let k = 0; ENG.acc >= BUF_S && k < 8; k++) { engStep(); ENG.acc -= BUF_S; }
+      if (ENG.acc > BUF_S) ENG.acc = 0;    // fell behind (a slow frame): skip rather than catch up
+    }
     emitWaves(now);
     if (cw > 0) drawScene(now);
     updateAudio();
@@ -1207,7 +1468,7 @@
   if (state.sound && SHELL) ensureAudio();
   // iPhone only allows this on a finished tap, so keep trying on every tap until the sound is running
   ShemaAudio.unlock(() => { if (state.sound) ensureAudio(); return ac; });
-  if (location.hash === '#test') window.__s = { state, step, addSource, removeSource, setNight, currentReading, judge, freeSpot, geom, TYPES, MAX_SOURCES, RANGE, DEV, sx, sy };
+  if (location.hash === '#test') window.__s = { state, step, ENG, engSet, engStep, addSource, removeSource, setNight, currentReading, judge, freeSpot, geom, TYPES, MAX_SOURCES, RANGE, DEV, sx, sy };
   requestAnimationFrame(frame);
 
   // ================= opening sequence (same as the Shema app) =================
