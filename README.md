@@ -1,11 +1,14 @@
 # Shema Games
 
-Two small browser games for the Shema noise monitor (EPR400/402, H.J.G. Meyer), in one page:
+Three small browser games for the Shema noise monitor (EPR400/402, H.J.G. Meyer), all on Jacaranda Street. Built phone-first.
 
-- **Let Grandma Sleep** (`#grandma`, the default): tap noises on Jacaranda Street so Shema catches them before they wake Grandma. Easy / Normal / Hard.
-- **Shema Street** (`#street`): a sandbox. Drag noise sources onto the street and watch Shema measure, locate, classify and judge them (simplified SANS 10103 rules).
+`index.html` plays the Shema intro, then shows a card to pick a game. Each game opens in the same page and has a switch button at the top to go back to the picker. Every game starts with its own explainer cards.
 
-No build step, no sign-in, nothing stored online. The best score and chosen difficulty are kept in the player's own browser (`localStorage`).
+- **Let Grandma Sleep** (`grandma.html`): tap noises on the street so Shema catches them before they wake Grandma. Easy / Normal / Hard.
+- **Squirrel Run** (`squirrel.html`): a side-view runner, best with the phone sideways. Jump across roofs, trees and power lines without making enough noise for Shema to lock on. Falling or getting caught ends the run.
+- **Sandbox** (`sandbox.html`): drag noises onto the street and watch Shema measure, locate, classify and judge them (simplified SANS 10103 rules).
+
+Sound is on by default (it starts on the first tap). No build step, no sign-in, nothing stored online. Best scores, difficulty and the sound setting are kept in the player's own browser (`localStorage`).
 
 ## Run locally
 
@@ -21,16 +24,14 @@ then open http://localhost:8000.
 
 Vercel: import this repository, framework preset "Other", no build command, output directory = repository root.
 
-## Adding sprites and sounds
+## Sprites and sounds
 
-All files live in `assets/`. In `index.html`, search for these and fill in a file name:
+All files live in `assets/`. Sprites are horizontal strips of 6 square frames, facing right, on a transparent background (WebP or PNG). Sounds are short mp3/ogg/wav files.
 
-| What | Where in `index.html` | Format |
+| What | Where | Notes |
 |---|---|---|
-| Noise sprites | `NOISE_ART` | horizontal strip of 6 square frames, facing right, transparent (WebP or PNG) |
-| Noise sounds | `NOISE_SOUNDS` | mp3/ogg/wav, short (1–6 s) |
-| Grandma | `GRANDMA_ART` (`sleep`, `stir`, `awake`) | 4:3 picture, e.g. 1600 × 1200 |
+| Noise sprites and sounds | `NOISE_ART`, `NOISE_SOUNDS` in `grandma.html` and `sandbox.html` | sounds in `CALLS` play once each time the noise starts; the others loop |
+| Grandma pictures | `GRANDMA_ART` in `grandma.html` (`sleep`, `stir`, `awake`) | 4:3 picture, e.g. 1600 × 1200 |
+| Squirrel Run | `assets/squirrel_run.webp`, `assets/squirrel_jump.webp` | jump frames: crouch, take-off, rising, top, falling, landing |
 
-Sounds listed in `CALLS` (dog, cat, squirrel, owl, taxi, rooster, hadeda) play once each time the noise starts; the others loop while it is on.
-
-Still missing: sprites for the bass car, drill and car alarm; sounds for the bass car, vuvuzela and hadeda; the three Grandma pictures. Until then the game uses emoji and built-in synth sounds.
+Still missing: sprites for the bass car, drill and car alarm; sounds for the bass car, vuvuzela and hadeda; the three Grandma pictures. Until then the games use emoji and built-in synth sounds.

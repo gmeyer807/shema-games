@@ -1,0 +1,1217 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Shema Sandbox</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  /* Layout: top bar · street scene (canvas) with a tray of sounds under it · device panel to the right (below on phones).
+     Colours = the Shema app's light theme tokens, with the app's dark theme for dark mode. */
+  :root {
+    --bg-0: #eef1ec; --bg-1: #fbfcfa; --bg-2: #f3f5f1; --bg-3: #e4e9e2;
+    --line: #d5dcd3; --line-bright: #b9c3b8;
+    --amber: #b86b00; --amber-hi: #9a5900; --amber-glow: rgba(184, 107, 0, 0.14);
+    --green: #1d8a4b; --red: #cc3326; --blue: #2a68b8;
+    --text-0: #151b17; --text-1: #3a453e; --text-2: #66726a; --text-3: #909a92;
+    --shadow: rgba(30, 40, 34, 0.14);
+    --page-glow-a: rgba(184, 107, 0, 0.06); --page-glow-b: rgba(42, 104, 184, 0.05); --intro-glow: rgba(184, 107, 0, 0.10);
+    --cls-alarm: #d81e34; --cls-dog: #a87b00; --cls-engine: #e05a00; --cls-music: #7a3ff2;
+    --cls-power_tools: #00897b; --cls-voices: #c21e8f; --cls-weather: #1f5fd6; --cls-background: #87918a; --cls-unknown: #87918a;
+    /* street scene */
+    --sc-grass: #dde7d3; --sc-grass-2: #d2dec6; --sc-pave: #e9ede6; --sc-road: #cbd2c9; --sc-road-line: #fbfcfa;
+    --sc-house: #fbfcfa; --sc-house-edge: #b9c3b8; --sc-roof-a: #d6c4a6; --sc-roof-b: #bccbd4; --sc-roof-c: #d9c2bf; --sc-roof-d: #c8d1b6;
+    --sc-tree: #9dbd8b; --sc-tree-2: #86ab76; --sc-jacaranda: #b49ad8; --sc-water: #bfd5e6; --sc-label: #66726a;
+    --sc-night: rgba(18, 28, 46, 0.30); --sc-lamp: rgba(255, 214, 140, 0.55);
+    --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    --sans: 'Inter', system-ui, 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg-0: #0e1210; --bg-1: #151a17; --bg-2: #1b211d; --bg-3: #232a25;
+      --line: #2c342e; --line-bright: #3a453d;
+      --amber: #f5a623; --amber-hi: #ffb84d; --amber-glow: rgba(245, 166, 35, 0.15);
+      --green: #5fd88f; --red: #e8564a; --blue: #5b9bd8;
+      --text-0: #eef2ee; --text-1: #b7c2ba; --text-2: #7c887f; --text-3: #4d574f;
+      --shadow: rgba(0, 0, 0, 0.45);
+      --page-glow-a: rgba(245, 166, 35, 0.05); --page-glow-b: rgba(91, 155, 216, 0.04); --intro-glow: rgba(245, 166, 35, 0.07);
+      --cls-alarm: #ff4d5e; --cls-dog: #ffd23f; --cls-engine: #ff8c32; --cls-music: #b98cff;
+      --cls-power_tools: #2ee6d6; --cls-voices: #ff6fcf; --cls-weather: #4f8fff; --cls-background: #8c978f; --cls-unknown: #8c978f;
+      --sc-grass: #16201a; --sc-grass-2: #1a251e; --sc-pave: #1e2520; --sc-road: #262e28; --sc-road-line: #46514a;
+      --sc-house: #222a24; --sc-house-edge: #3a453d; --sc-roof-a: #3d3529; --sc-roof-b: #2a3640; --sc-roof-c: #3d2e2d; --sc-roof-d: #303826;
+      --sc-tree: #24392a; --sc-tree-2: #2c4532; --sc-jacaranda: #4a3d66; --sc-water: #1b2b38; --sc-label: #7c887f;
+      --sc-night: rgba(0, 4, 12, 0.35); --sc-lamp: rgba(255, 200, 110, 0.30);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg-0: #0e1210; --bg-1: #151a17; --bg-2: #1b211d; --bg-3: #232a25;
+    --line: #2c342e; --line-bright: #3a453d;
+    --amber: #f5a623; --amber-hi: #ffb84d; --amber-glow: rgba(245, 166, 35, 0.15);
+    --green: #5fd88f; --red: #e8564a; --blue: #5b9bd8;
+    --text-0: #eef2ee; --text-1: #b7c2ba; --text-2: #7c887f; --text-3: #4d574f;
+    --shadow: rgba(0, 0, 0, 0.45);
+    --page-glow-a: rgba(245, 166, 35, 0.05); --page-glow-b: rgba(91, 155, 216, 0.04); --intro-glow: rgba(245, 166, 35, 0.07);
+    --cls-alarm: #ff4d5e; --cls-dog: #ffd23f; --cls-engine: #ff8c32; --cls-music: #b98cff;
+    --cls-power_tools: #2ee6d6; --cls-voices: #ff6fcf; --cls-weather: #4f8fff; --cls-background: #8c978f; --cls-unknown: #8c978f;
+    --sc-grass: #16201a; --sc-grass-2: #1a251e; --sc-pave: #1e2520; --sc-road: #262e28; --sc-road-line: #46514a;
+    --sc-house: #222a24; --sc-house-edge: #3a453d; --sc-roof-a: #3d3529; --sc-roof-b: #2a3640; --sc-roof-c: #3d2e2d; --sc-roof-d: #303826;
+    --sc-tree: #24392a; --sc-tree-2: #2c4532; --sc-jacaranda: #4a3d66; --sc-water: #1b2b38; --sc-label: #7c887f;
+    --sc-night: rgba(0, 4, 12, 0.35); --sc-lamp: rgba(255, 200, 110, 0.30);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  body {
+    margin: 0; background: var(--bg-0); color: var(--text-0); font-family: var(--sans); font-size: 14px;
+    background-image: radial-gradient(ellipse 1200px 600px at 15% -10%, var(--page-glow-a), transparent 60%),
+      radial-gradient(ellipse 800px 500px at 100% 0%, var(--page-glow-b), transparent 60%);
+    -webkit-tap-highlight-color: transparent;
+  }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  .app {
+    height: 100%; height: 100dvh; display: grid; gap: 14px;
+    grid-template-columns: minmax(0, 1fr) 360px; grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: "top top" "stage panel";
+    padding-block: 12px 14px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar { grid-area: top; display: flex; align-items: center; gap: 14px; min-width: 0; flex-wrap: wrap; }
+  .shema-logo { height: 30px; width: auto; aspect-ratio: 932 / 316; flex-shrink: 0; overflow: visible; }
+  .shema-logo .sl-l { fill: var(--amber); }
+  .shema-logo .sl-lat path { fill: var(--text-0); }
+  .brand-sub { font-family: var(--mono); font-size: 9px; line-height: 1.35; letter-spacing: .12em; color: var(--text-3); padding-left: 10px; border-left: 1px solid var(--line-bright); }
+  body.intro-on .topbar .shema-logo { visibility: hidden; }
+  .spacer { flex: 1; }
+  .seg { display: inline-flex; background: var(--bg-2); border: 1px solid var(--line); border-radius: 8px; padding: 3px; }
+  .seg button { border: 0; background: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: var(--mono); font-size: 12px; color: var(--text-2); }
+  .seg button[aria-pressed="true"] { background: var(--bg-1); color: var(--text-0); box-shadow: 0 1px 3px var(--shadow); }
+  .btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--bg-1); border-radius: 8px; padding: 7px 12px; cursor: pointer; font-family: var(--mono); font-size: 12px; color: var(--text-1); }
+  .btn:hover { border-color: var(--line-bright); }
+  .btn[aria-pressed="true"] { border-color: var(--amber); color: var(--amber); background: var(--amber-glow); }
+  .btn svg { width: 16px; height: 16px; }
+  .mode-btn { font-family: var(--sans); font-size: 14px; font-weight: 700; color: var(--text-0); padding: 6px 12px 6px 8px; }
+  .mode-btn svg { color: var(--amber); width: 18px; height: 18px; }
+  .mode-btn .short { display: none; }
+
+  /* ---------- stage ---------- */
+  .stage { grid-area: stage; display: flex; flex-direction: column; gap: 10px; min-height: 0; min-width: 0; }
+  .scene-wrap { position: relative; flex: 1; min-height: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg-2); box-shadow: 0 4px 18px var(--shadow); }
+  canvas#scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: default; }
+  .scene-hint { position: absolute; left: 12px; bottom: 12px; font-family: var(--mono); font-size: 11px; color: var(--text-1); background: var(--bg-1); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; pointer-events: none; max-width: calc(100% - 24px); }
+  .bin { position: absolute; top: 12px; right: 12px; display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px; border: 2px dashed var(--line-bright); background: var(--bg-1); font-family: var(--mono); font-size: 12px; color: var(--text-2); pointer-events: none; }
+  .bin.hot { border-color: var(--red); color: var(--red); }
+  .bin svg { width: 16px; height: 16px; }
+
+  .tray { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 4px; scrollbar-width: thin; }
+  .src { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg-1); cursor: grab; touch-action: pan-x; user-select: none; -webkit-user-select: none; }
+  .src:hover { border-color: var(--line-bright); }
+  .src .ic { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; border: 2px solid var(--c); background: var(--bg-2); }
+  .ic.spr, .ghost.spr { background-size: 600% 100%; background-position: 0 0; background-repeat: no-repeat; }
+  .src .nm { font-size: 13px; font-weight: 500; white-space: nowrap; }
+  .src[disabled] { opacity: .45; cursor: not-allowed; }
+  .tray .btn { flex: 0 0 auto; border-radius: 999px; }
+  .ghost { position: fixed; z-index: 50; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; background: var(--bg-1); border: 3px solid var(--c); box-shadow: 0 6px 18px var(--shadow); pointer-events: none; }
+
+  /* ---------- device panel ---------- */
+  .panel { grid-area: panel; display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow-y: auto; padding-right: 2px; }
+  .card { background: var(--bg-1); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .lbl { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-2); display: flex; align-items: center; gap: 8px; }
+  .lbl .r { margin-left: auto; letter-spacing: .04em; text-transform: none; color: var(--text-3); }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .status { flex-direction: row; align-items: center; gap: 12px; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .08em; padding: 5px 10px; border-radius: 999px; background: var(--bg-2); border: 1px solid var(--line); color: var(--text-1); }
+  .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+  .pill.rec { color: var(--red); border-color: var(--red); }
+  .pill.rec .dot { background: var(--red); animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: .2; } }
+  .status .clock { margin-left: auto; font-size: 20px; font-weight: 500; color: var(--text-0); }
+
+  .lvl-row { display: flex; align-items: baseline; gap: 8px; }
+  .lvl-big { font-size: 44px; font-weight: 700; letter-spacing: -.03em; line-height: 1; }
+  .lvl-unit { font-family: var(--mono); font-size: 12px; color: var(--text-2); }
+  .meter { position: relative; height: 12px; border-radius: 6px; background: var(--bg-3); overflow: visible; }
+  .meter .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; background: var(--green); transition: width .1s linear, background .2s; }
+  .meter .tick { position: absolute; top: -4px; bottom: -4px; width: 2px; border-radius: 1px; }
+  .meter-legend { display: flex; gap: 12px; flex-wrap: wrap; font-family: var(--mono); font-size: 10px; color: var(--text-2); }
+  .meter-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .dir-body { display: flex; align-items: center; gap: 10px; }
+  canvas#dial { width: 84px; height: 48px; flex-shrink: 0; }
+  .dir-val { font-size: 24px; font-weight: 700; }
+  .sub { font-size: 12px; color: var(--text-2); }
+  .chip { display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 13px; font-weight: 500; padding: 4px 10px 4px 8px; border-radius: 999px; background: var(--bg-2); border: 1px solid var(--line); white-space: nowrap; }
+  .chip .d { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+  .conf { height: 6px; border-radius: 3px; background: var(--bg-3); overflow: hidden; }
+  .conf > div { height: 100%; background: var(--c, var(--amber)); width: 0; transition: width .2s; }
+
+  .verdict-h { font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
+  .verdict-h.bad { color: var(--red); } .verdict-h.ok { color: var(--green); } .verdict-h.idle { color: var(--text-2); }
+  .vline { font-size: 13px; color: var(--text-1); line-height: 1.45; }
+  .vline b { font-family: var(--mono); font-weight: 500; color: var(--text-0); }
+
+  .events { display: flex; flex-direction: column; gap: 6px; }
+  .ev { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 8px 10px; border-radius: 8px; background: var(--bg-2); border: 1px solid var(--line); }
+  .ev.open { border-color: var(--red); }
+  .ev .t { font-family: var(--mono); font-size: 12px; color: var(--text-1); }
+  .ev .m { font-family: var(--mono); font-size: 11px; color: var(--text-2); grid-column: 1 / -1; }
+  .badge { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; border: 1px solid currentColor; }
+  .badge.bad { color: var(--red); } .badge.ok { color: var(--green); } .badge.idle { color: var(--text-2); } .badge.nui { color: var(--amber); }
+  .empty { font-size: 12px; color: var(--text-2); padding: 6px 2px; }
+  .note { font-size: 11px; color: var(--text-2); line-height: 1.5; padding: 2px 2px 6px; }
+  .linkbtn { border: 0; background: none; padding: 0; font-family: var(--mono); font-size: 10px; color: var(--text-2); cursor: pointer; text-decoration: underline; margin-left: auto; letter-spacing: .04em; text-transform: none; }
+
+  /* ---------- opening sequence (same as the Shema app) ---------- */
+  .intro { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; cursor: pointer; }
+  .intro-bg { position: absolute; inset: 0; background: var(--bg-0); background-image: radial-gradient(ellipse 900px 520px at 50% 48%, var(--intro-glow), transparent 65%); transition: opacity .6s ease .15s; }
+  .intro.fly .intro-bg { opacity: 0; }
+  .intro.fly { pointer-events: none; }
+  .intro-stage { position: relative; display: flex; align-items: center; justify-content: center; }
+  .intro .shema-logo { position: relative; height: auto; width: min(78vw, 640px); transform-origin: 0 0; }
+  .intro.fly .shema-logo { transition: transform .75s cubic-bezier(.65, 0, .25, 1); }
+  .intro .sl-l { fill: transparent; stroke: var(--amber); stroke-width: 5; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1;
+    animation: slDraw 1s cubic-bezier(.6, 0, .3, 1) calc(.25s + var(--i) * .22s) forwards, slFill .45s ease calc(1s + var(--i) * .22s) forwards; }
+  .intro .sl-lat { opacity: 0; transform-box: fill-box; transform-origin: center; animation: slLat .6s cubic-bezier(.2, .9, .3, 1.15) 1.7s forwards; }
+  .intro-ring { position: absolute; left: 50%; top: 50%; width: min(52vw, 420px); aspect-ratio: 1; margin: calc(min(52vw, 420px) / -2) 0 0 calc(min(52vw, 420px) / -2);
+    border: 1.5px solid var(--amber); border-radius: 50%; opacity: 0; animation: slRing 1.8s cubic-bezier(.2, .6, .3, 1) calc(var(--r) * .35s) 2; pointer-events: none; }
+  .intro-sub { position: relative; font-family: var(--mono); font-size: clamp(10px, 1.4vw, 13px); letter-spacing: .42em; color: var(--text-2); opacity: 0; transform: translateY(6px); animation: slSub .6s ease 2.15s forwards; padding-left: .42em; }
+  .intro-skip { position: absolute; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); font-family: var(--mono); font-size: 10px; color: var(--text-3); opacity: 0; animation: slSub .4s ease .8s forwards; }
+  .intro.fly .intro-sub, .intro.fly .intro-skip, .intro.fly .intro-ring { transition: opacity .25s ease; opacity: 0 !important; animation: none; }
+  .intro.done .sl-l { animation: none; fill: var(--amber); stroke-width: 0; }
+  .intro.done .sl-lat, .intro.done .intro-sub { animation: none; opacity: 1; transform: none; }
+  @keyframes slDraw { to { stroke-dashoffset: 0; } }
+  @keyframes slFill { to { fill: var(--amber); stroke-width: 0; } }
+  @keyframes slLat { from { opacity: 0; transform: scale(1.35); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+  @keyframes slRing { 0% { opacity: 0; transform: scale(.25); } 15% { opacity: .45; } 100% { opacity: 0; transform: scale(1.9); } }
+  @keyframes slSub { to { opacity: 1; transform: none; } }
+
+  /* ---------- explainer cards ---------- */
+  .overlay { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--bg-0) 55%, transparent); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  .ocard { width: min(460px, 100%); background: var(--bg-1); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 40px var(--shadow); padding: 22px; display: flex; flex-direction: column; gap: 14px; max-height: 100%; overflow-y: auto; }
+  .ocard h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
+  .ocard h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
+  .ocard p { margin: 0; color: var(--text-1); line-height: 1.5; }
+  .ocard canvas { width: 100%; height: auto; aspect-ratio: 4 / 3; max-height: 38vh; object-fit: contain; border-radius: 10px; display: block; background: var(--rm-wall); }
+  .overlay.solid { background: color-mix(in srgb, var(--bg-0) 88%, transparent); }
+  .deck { gap: 16px; }
+  .slides { position: relative; min-height: 0; }
+  .slide { display: flex; flex-direction: column; gap: 10px; animation: slideIn .28s ease; }
+  .slide.back { animation-name: slideBack; }
+  .slide h1 { font-size: 26px; }
+  .slide p { font-size: 16px; }
+  .step { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--amber); }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+  @keyframes slideBack { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+  .deck-nav { display: flex; align-items: center; gap: 12px; }
+  .deck-nav .primary { margin-left: auto; }
+  .deck-nav .btn:not(.primary) { padding: 12px 16px; font-size: 14px; }
+  .dots { display: flex; gap: 7px; }
+  .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line-bright); transition: width .2s, background .2s; }
+  .dots i.on { width: 22px; border-radius: 4px; background: var(--amber); }
+  .btn.primary { background: var(--amber); border-color: var(--amber); color: var(--bg-1); font-family: var(--sans); font-weight: 700; font-size: 16px; padding: 12px 22px; border-radius: 10px; }
+  .btn.primary:hover { background: var(--amber-hi); }
+  .xart { aspect-ratio: 16 / 9; max-height: 34vh; border-radius: 10px; background: var(--bg-2); border: 1px solid var(--line); display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 8px; padding: 12px; overflow: hidden; }
+  .xart.street { background: repeating-linear-gradient(90deg, var(--sc-grass) 0 18px, var(--sc-grass-2) 18px 36px); }
+  .xart .src { cursor: default; }
+  .xart .big { font-size: 40px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .xcol { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+  @media (orientation: landscape) and (max-height: 620px) {
+    .ocard { width: min(760px, 100%); padding: 16px; gap: 10px; }
+    .slide { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 18px; row-gap: 8px; align-items: start; }
+    .slide > .xart { grid-column: 1; grid-row: 1 / span 6; max-height: none; }
+    .slide > :not(.xart) { grid-column: 2; }
+    .slide h1 { font-size: 22px; } .slide p { font-size: 14px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .slide { animation: none; } }
+
+  /* ---------- phones: one screen; the street and tray stay put, the readout scrolls under them ---------- */
+  @media (max-width: 860px) and (orientation: portrait) {
+    .app { gap: 10px; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); grid-template-areas: "top" "stage" "panel"; padding-block: 8px 10px; }
+    .stage { gap: 8px; }
+    .scene-wrap { flex: none; aspect-ratio: 110 / 74; max-height: 50dvh; width: 100%; }
+    .panel { gap: 8px; }
+    .brand-sub { display: none; }
+    .card { padding: 10px 12px; gap: 6px; }
+    .lvl-big { font-size: 34px; }
+    .verdict-h { font-size: 18px; }
+  }
+  /* phone held sideways: street and tray on the left, readout in a narrow column */
+  @media (orientation: landscape) and (max-height: 620px) {
+    .app { gap: 8px; grid-template-columns: minmax(0, 1fr) clamp(220px, 32vw, 320px); padding-block: 6px 8px; }
+    .stage { gap: 6px; }
+    .shema-logo { height: 24px; }
+    .brand-sub { display: none; }
+    .card { padding: 8px 10px; gap: 6px; }
+    .panel { gap: 8px; }
+    .lvl-big { font-size: 30px; }
+    .verdict-h { font-size: 17px; }
+    .src { padding: 5px 10px 5px 5px; }
+    .src .ic { width: 26px; height: 26px; }
+    .two { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 520px) {
+    .btn .lbl-long, .mode-btn .full { display: none; }
+    .mode-btn .short { display: inline; }
+    .topbar { gap: 8px; flex-wrap: nowrap; }
+    .shema-logo { height: 26px; }
+    .seg button { padding: 6px 9px; }
+    .scene-hint { font-size: 10px; left: 8px; bottom: 8px; padding: 4px 8px; }
+    .bin { top: 8px; right: 8px; padding: 6px 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pill.rec .dot { animation: none; }
+  }
+</style>
+
+<div class="intro" id="intro" aria-hidden="true">
+  <div class="intro-bg"></div>
+  <div class="intro-stage">
+    <div class="intro-ring" style="--r:0"></div>
+    <div class="intro-ring" style="--r:1"></div>
+    <div class="intro-ring" style="--r:2"></div>
+  </div>
+  <div class="intro-sub">NOISE EVENT MONITOR</div>
+  <div class="intro-skip">tap to skip</div>
+</div>
+<script>document.body.classList.add('intro-on');</script>
+
+<div class="app">
+  <header class="topbar">
+    <svg class="shema-logo" viewBox="-8 -8 932 316" role="img" aria-label="SHEMA">
+      <g class="sl-heb">
+        <path class="sl-l" pathLength="1" style="--i:2" d="M32.8 298.9C15.9 297.4 9.5 294.0 7.0 285.2C5.4 279.4 5.8 273.9 9.0 254.7C13.3 228.5 16.3 220.4 23.3 216.1C28.8 212.7 37.8 212.0 77.1 212.0C97.8 212.0 116.2 211.7 117.9 211.4C120.3 210.9 121.0 210.2 121.0 208.5C121.0 202.7 100.3 180.6 66.0 149.8C33.6 120.6 10.4 92.7 2.4 73.3C-3.0 60.2 1.4 40.2 13.2 23.8C28.6 2.3 31.1 0.5 43.8 1.2C48.7 1.5 53.3 2.5 56.4 3.8C63.1 6.8 72.8 17.0 83.0 31.9C111.6 73.5 159.3 133.0 164.1 133.0C166.9 133.0 170.8 115.7 171.7 99.6L172.3 88.5L161.9 82.6C140.7 70.4 133.2 64.4 131.7 58.2C129.1 47.6 153.8 9.3 167.7 2.1C175.6 -1.9 182.2 -0.3 197.6 9.3C222.1 24.5 240.1 42.3 248.0 59.1C254.6 73.2 254.3 88.0 247.1 116.1C239.5 145.4 234.9 156.5 219.6 181.9C209.7 198.3 207.0 203.3 207.0 205.4C207.0 206.2 210.9 211.5 215.6 217.2C220.4 222.9 225.6 230.4 227.3 234.0C230.1 239.8 230.4 241.3 230.3 250.0C230.1 261.9 227.6 278.8 225.2 284.4C222.4 290.6 216.6 295.8 210.6 297.4C206.5 298.6 189.3 298.9 123.5 299.3C78.4 299.5 37.6 299.4 32.8 298.9Z" />
+        <path class="sl-l" pathLength="1" style="--i:1" d="M496.1 298.9C489.2 297.7 482.5 293.8 480.3 289.7C478.8 287.0 478.5 283.9 478.6 268.5C478.7 258.6 479.2 238.6 479.9 224.0C480.5 209.4 481.0 184.0 481.0 167.5C481.0 135.0 479.8 121.8 475.9 111.6C474.0 106.4 473.3 105.6 469.1 103.6C464.8 101.7 463.0 101.5 444.5 101.6C414.2 101.8 392.2 105.4 386.0 111.2C384.0 113.1 383.8 113.9 384.4 119.5C384.7 122.8 389.0 141.8 393.9 161.6C407.3 215.4 407.5 216.6 407.5 236.0C407.5 258.4 404.8 271.5 397.8 282.3C390.8 293.3 383.8 294.9 340.0 295.7C289.7 296.7 286.3 295.2 284.0 272.0C282.2 255.3 285.7 225.4 290.7 212.7C293.5 205.7 300.3 204.1 319.0 206.0C326.6 206.8 331.5 206.9 332.1 206.3C333.9 204.5 326.8 168.2 321.0 149.5C319.3 144.0 316.1 132.2 314.0 123.3C311.8 114.4 309.1 105.3 308.0 103.0C305.9 98.8 305.2 98.5 295.9 97.5C292.9 97.2 288.9 96.0 287.1 94.9C283.3 92.6 280.1 86.1 280.0 80.7C280.0 76.1 287.3 34.7 290.1 23.5C294.5 5.9 301.1 0.7 319.5 0.6C329.7 0.5 332.7 2.1 333.6 8.2C334.4 12.9 336.7 15.6 340.7 16.6C342.3 17.0 350.2 16.8 358.5 16.1C403.8 12.5 461.1 11.0 483.0 12.9C498.7 14.2 517.6 17.8 524.3 20.8C535.8 25.9 546.4 34.9 550.6 43.1C556.5 54.9 560.5 78.6 561.6 109.0C562.4 132.4 560.4 214.8 558.4 238.5C555.7 271.5 553.7 280.4 547.7 286.1C538.9 294.7 511.2 301.5 496.1 298.9Z" />
+        <path class="sl-l" pathLength="1" style="--i:0" d="M645.0 299.0C635.9 298.1 630.6 296.7 626.3 294.1C621.8 291.3 620.3 288.5 619.1 281.0C616.6 265.2 613.0 200.6 613.0 171.4C613.0 150.9 611.6 132.7 608.9 116.7C606.2 100.6 603.9 94.9 598.5 90.5C587.7 81.6 588.3 74.1 602.4 42.5C610.6 24.2 617.6 12.2 622.4 8.5C632.8 0.6 649.7 3.9 664.3 16.7C678.2 28.9 684.1 41.1 688.0 66.2C691.8 90.8 690.8 143.7 685.4 201.2C684.8 207.0 685.0 207.9 686.6 208.8C690.7 211.0 737.7 205.4 756.5 200.5C769.3 197.1 799.3 185.2 809.5 179.4C819.6 173.7 828.3 165.6 832.2 158.4C836.7 150.1 837.8 142.6 838.6 115.9L839.3 91.3L831.9 90.6C818.9 89.3 811.8 84.4 810.5 75.6C810.1 73.0 810.7 64.1 811.9 53.9C817.0 12.4 821.6 2.3 836.4 0.5C844.9 -0.6 865.5 4.1 875.9 9.4C883.9 13.6 900.3 25.6 905.1 30.8C908.0 33.9 911.5 39.0 912.9 42.0L915.5 47.5L915.4 75.0C915.3 109.4 914.3 117.1 904.6 157.0C889.8 217.6 882.1 237.8 869.3 249.0C859.1 258.0 810.2 275.4 765.7 286.0C740.7 291.9 703.7 297.2 675.5 299.0C658.1 300.1 656.2 300.1 645.0 299.0Z" />
+        <path class="sl-l" pathLength="1" style="--i:0" d="M722.1 173.0C707.3 171.4 706.2 171.1 703.5 167.9C701.7 165.7 701.0 163.7 701.0 160.7C701.0 156.4 708.8 132.5 717.0 111.5C720.5 102.7 721.3 99.2 721.4 93.9C721.5 85.8 720.5 84.4 710.7 79.3C699.7 73.5 695.8 67.2 698.1 58.6C699.5 53.0 716.5 22.2 721.8 15.3C727.6 8.0 732.9 5.5 743.0 5.5C753.1 5.5 757.9 7.5 769.8 16.8C785.2 28.8 792.0 37.8 796.2 51.5C799.5 62.2 799.3 78.4 795.8 91.2C788.0 119.1 770.8 154.2 759.0 166.0C753.3 171.7 748.8 173.4 738.5 173.6C733.5 173.7 726.2 173.5 722.1 173.0Z" />
+      </g>
+      <g transform="translate(201.3 92.2) scale(0.85)"><g class="sl-lat"><path d="M27.5 134.9C16.3 133.3 5.8 127.9 1.9 121.7C-2.1 115.3 1.1 94.8 6.8 89.7C8.3 88.4 9.4 88.8 17.0 93.1C26.9 98.9 31.2 100.2 38.3 99.8C42.7 99.5 43.6 99.1 45.0 96.8C47.6 92.1 45.1 89.4 32.0 82.6C17.7 75.1 9.5 67.5 6.0 58.5C4.0 53.4 3.6 50.7 3.5 40.5C3.5 29.2 3.7 28.2 6.4 22.7C10.2 15.2 18.3 7.7 26.7 3.7C33.0 0.8 34.4 0.5 46.6 0.2C66.8 -0.4 83.1 3.6 84.6 9.5C85.4 12.8 83.6 20.8 80.0 29.3C75.5 40.1 76.2 39.6 68.6 36.6C60.6 33.4 50.6 32.3 47.0 34.2C44.1 35.7 43.1 41.2 45.1 43.7C45.8 44.5 50.9 47.4 56.4 50.2C78.1 61.0 85.4 68.6 88.0 83.0C90.5 96.6 85.1 114.9 76.0 124.0C66.1 133.9 48.3 137.9 27.5 134.9ZM109.0 133.3C103.8 132.2 104.0 135.1 104.0 67.4L104.0 4.1L106.2 2.9C111.5 0.1 138.5 0.7 141.5 3.7C142.7 4.9 143.0 9.0 143.0 27.6L143.0 50.0L156.0 50.0L169.0 50.0L169.0 27.1L169.0 4.2L172.2 2.9C176.3 1.2 200.2 1.1 204.2 2.8L207.0 4.0L207.0 68.0L207.0 132.0L204.2 132.7C200.7 133.7 175.3 133.7 171.8 132.7L169.0 132.0L169.0 109.5L169.0 87.0L156.0 87.0L143.0 87.0L143.0 108.9C143.0 127.6 142.8 130.9 141.4 132.1C139.8 133.4 114.2 134.4 109.0 133.3ZM228.0 132.0C226.0 130.0 226.0 128.7 226.0 67.1C226.0 11.2 226.2 4.0 227.6 2.6C228.9 1.2 233.6 1.0 264.0 1.0L299.0 1.0L300.5 3.4C301.7 5.2 302.1 8.6 302.1 18.0C302.1 35.9 303.2 35.0 281.0 35.0L263.0 35.0L263.0 44.5L263.0 54.0L276.0 54.0C287.8 54.0 289.0 54.2 290.0 55.9C291.3 58.5 291.3 74.9 289.9 78.9L288.8 82.0L275.9 82.0L263.0 82.0L263.0 91.5L263.0 101.0L281.5 101.0C299.6 101.0 300.0 101.0 301.2 103.2C303.0 106.4 302.9 126.4 301.1 130.8L299.8 134.0L264.9 134.0C231.3 134.0 229.9 133.9 228.0 132.0ZM324.5 132.6C320.9 131.6 320.5 131.1 320.2 128.0C320.0 126.1 320.8 97.7 322.0 65.0C323.7 18.3 324.4 5.2 325.5 4.1C329.4 0.2 363.5 0.1 372.1 4.0C374.2 5.0 376.1 9.5 384.9 34.3C390.6 50.4 395.6 63.8 395.9 64.2C396.3 64.6 399.0 57.2 401.9 47.7C415.5 3.1 414.8 5.0 418.8 3.2C421.8 1.8 425.9 1.5 440.5 1.6C460.7 1.6 466.7 2.7 467.4 6.3C468.6 12.1 473.0 130.4 472.1 131.3C469.6 133.8 445.1 135.0 439.2 132.9C436.4 131.9 436.1 131.4 435.6 126.7C435.1 122.2 432.1 65.2 431.9 58.0C431.9 55.7 431.8 55.7 431.0 57.5C430.5 58.6 425.3 75.5 419.4 95.0C413.6 114.5 408.2 131.2 407.4 132.0C406.4 133.1 403.4 133.4 395.5 133.4C389.7 133.4 384.6 133.0 384.1 132.5C383.5 131.9 377.8 114.3 371.4 93.3C364.9 72.2 359.5 55.1 359.4 55.3C359.2 55.4 358.6 71.7 358.0 91.5C357.4 111.3 356.5 128.5 356.0 129.7C355.4 131.2 353.7 132.1 350.0 132.9C343.4 134.3 329.6 134.2 324.5 132.6ZM492.5 133.5C491.9 133.3 490.3 132.9 488.8 132.6C487.0 132.2 486.0 131.3 486.0 130.2C486.1 126.8 518.7 3.9 519.9 2.7C521.5 1.1 568.4 1.0 570.0 2.6C570.6 3.2 578.5 32.5 587.4 67.6C601.9 124.3 603.6 131.6 602.1 132.4C601.2 133.0 594.0 133.6 586.0 133.8C574.5 134.1 570.7 133.9 567.8 132.7C563.8 131.0 563.5 130.4 559.2 113.0L557.4 105.5L542.0 105.5L526.6 105.5L523.9 117.3C522.4 123.8 520.7 129.7 520.1 130.4C518.3 132.6 510.8 134.0 501.8 133.9C497.2 133.9 493.1 133.7 492.5 133.5ZM551.0 79.4C551.0 78.6 549.4 70.6 547.5 61.7C542.6 38.8 543.0 40.3 542.0 42.0C541.1 43.6 532.0 78.2 532.0 80.0C532.0 80.6 535.6 81.0 541.5 81.0C549.5 81.0 551.0 80.7 551.0 79.4Z" /></g></g>
+    </svg>
+    <div class="brand-sub">NOISE EVENT<br>MONITOR</div>
+    <div class="spacer"></div>
+    <button class="btn mode-btn" id="btnMode" type="button" title="Switch game" aria-label="Sandbox. Switch game">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-4-4"/><path d="M20 16H6l4 4"/></svg>
+      <span class="full">Sandbox</span><span class="short">Sandbox</span>
+    </button>
+    <div class="seg" role="group" aria-label="Time of day">
+      <button id="btnDay" aria-pressed="true">Day</button>
+      <button id="btnNight" aria-pressed="false">Night</button>
+    </div>
+    <button class="btn" id="btnSound" aria-pressed="false" title="Sound">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWaves" d="M23 9l-6 6M17 9l6 6"/></svg>
+      <span id="sndLabel" class="lbl-long">Sound off</span>
+    </button>
+  </header>
+
+  <main class="stage">
+    <div class="scene-wrap" id="sceneWrap">
+      <canvas id="scene" aria-label="Street with the Shema device. Drag sounds onto it."></canvas>
+      <div class="scene-hint" id="hint">Tap a noise below to add it, or drag it onto the street. Drag it off to remove it.</div>
+      <div class="bin" id="bin" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+        Drop here to remove
+      </div>
+    </div>
+    <div class="tray" id="tray"></div>
+  </main>
+
+<div class="overlay solid" id="startCard">
+  <div class="ocard deck" id="deck" aria-roledescription="carousel">
+    <div class="slides">
+      <section class="slide" aria-label="1 of 3">
+        <div class="xart street" aria-hidden="true"><span class="src" style="--c: var(--cls-dog)"><span class="ic spr" style="background-image: url(assets/dog.webp)"></span><span class="nm">Dog</span></span><span class="src" style="--c: var(--cls-engine)"><span class="ic spr" style="background-image: url(assets/taxi.webp)"></span><span class="nm">Hooting taxi</span></span><span class="src" style="--c: var(--cls-weather)"><span class="ic spr" style="background-image: url(assets/owl.webp)"></span><span class="nm">Owl</span></span><span class="src" style="--c: var(--cls-music)"><span class="ic spr" style="background-image: url(assets/vuvuzela.webp)"></span><span class="nm">Vuvuzela fan</span></span><span class="src" style="--c: var(--cls-power_tools)"><span class="ic spr" style="background-image: url(assets/frog.webp)"></span><span class="nm">Pool frog</span></span></div>
+        <div class="step">1 / 3</div>
+        <h1>Build a noisy street</h1>
+        <p>Tap a noise in the tray under the street to add it, or drag it exactly where you want it. Drag it off the street to remove it. Up to 8 noises at once.</p>
+      </section>
+      <section class="slide" aria-label="2 of 3" hidden>
+        <div class="xart" aria-hidden="true"><div class="xcol"><span class="pill rec"><span class="dot"></span>RECORDING</span><span class="big">61.1 <span class="lvl-unit">dB(A)</span></span><span class="chip" style="--c: var(--cls-engine)"><span class="d"></span>engine · 109°</span></div></div>
+        <div class="step">2 / 3</div>
+        <h1>Watch Shema listen</h1>
+        <p>Shema records anything 7 dB louder than the street's background. It finds the direction across the 180° in front of the wall, guesses what the noise is, and keeps one log entry per disturbance.</p>
+      </section>
+      <section class="slide" aria-label="3 of 3" hidden>
+        <div class="xart" aria-hidden="true"><div class="xcol"><div class="seg"><button tabindex="-1">Day</button><button tabindex="-1" aria-pressed="true">Night</button></div><div class="verdict-h bad">Disturbing noise</div><span class="sub num">limit 40 dB(A) at night · 50 by day</span></div></div>
+        <div class="step">3 / 3</div>
+        <h1>Day, night and the law</h1>
+        <p>Each noise gets a verdict against SANS 10103 for a suburb: 50 dB(A) by day, 40 at night. Try the same noise in both. Rain raises the background and never counts as a disturbance.</p>
+      </section>
+    </div>
+    <div class="deck-nav">
+      <button class="btn" id="btnBack" type="button">Back</button>
+      <div class="dots" id="dots"><i></i><i></i><i></i></div>
+      <button class="btn primary" id="btnNext" type="button">Next</button>
+    </div>
+  </div>
+</div>
+
+
+  <aside class="panel" aria-live="polite">
+    <div class="card status">
+      <span class="pill" id="pill"><span class="dot"></span><span id="pillText">LISTENING</span></span>
+      <span class="clock num" id="clock">14:00:00</span>
+    </div>
+
+    <div class="card">
+      <div class="lbl">Level · LAS<span class="r" id="ambNote">ambient 45.0</span></div>
+      <div class="lvl-row"><span class="lvl-big num" id="lvl">45.0</span><span class="lvl-unit">dB(A)</span></div>
+      <div class="meter" id="meter">
+        <div class="fill" id="meterFill"></div>
+        <div class="tick" id="tAmb" style="background: var(--text-2)"></div>
+        <div class="tick" id="tCatch" style="background: var(--amber)"></div>
+        <div class="tick" id="tLimit" style="background: var(--red)"></div>
+      </div>
+      <div class="meter-legend">
+        <span><i style="background: var(--text-2)"></i>ambient</span>
+        <span><i style="background: var(--amber)"></i>catch +7 dB</span>
+        <span><i style="background: var(--red)"></i>limit <b id="limTxt" class="num">50</b></span>
+      </div>
+    </div>
+
+    <div class="two">
+      <div class="card">
+        <div class="lbl">Direction</div>
+        <div class="dir-body">
+          <canvas id="dial" width="168" height="96"></canvas>
+          <div><div class="dir-val num" id="dirVal">—</div><div class="sub num" id="dirSub">no source</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="lbl">Source</div>
+        <div id="srcChip"><span class="chip" style="--c: var(--cls-background)"><span class="d"></span>quiet</span></div>
+        <div class="conf"><div id="confBar"></div></div>
+        <div class="sub num" id="confTxt">—</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="lbl">Verdict · SANS 10103 suburban</div>
+      <div class="verdict-h idle" id="vHead">All quiet</div>
+      <div class="vline" id="vLine1">Nothing is louder than the ambient + 7 dB, so nothing is recorded.</div>
+      <div class="vline" id="vLine2"></div>
+    </div>
+
+    <div class="card">
+      <div class="lbl">Event log<span class="r" id="evCount">0 events</span><button class="linkbtn" id="btnClearLog">clear</button></div>
+      <div class="events" id="events"><div class="empty">No events yet. Shema keeps one record per disturbance, even if it stops and starts.</div></div>
+    </div>
+
+    <div class="note">A simplified simulation for fun: sound drops 6 dB each time the distance doubles, the house wall blocks 12 dB from behind, and limits follow SANS 10103 for a suburban district (day 50, night 40 dB(A)). The real Shema does this on an STM32 with four microphones.</div>
+  </aside>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  // Opened inside the Shema games app (index.html) the page skips its own intro and shares the app's sound.
+  const EMBED = new URLSearchParams(location.search).has('embed');
+  const SHELL = (() => { try { return EMBED && window.parent !== window && window.parent.ShemaShell ? window.parent.ShemaShell : null; } catch (e) { return null; } })();
+  const soundPref = () => { try { return localStorage.getItem('shema.sound') !== '0'; } catch (e) { return true; } };
+  // ================= model =================
+  const W = 110, H = 72;                  // world in metres
+  const DEV = { x: 55, y: 60 };           // Shema on the front wall of your house, facing north
+  const RANGE = 50;                        // Req 1: up to 50 m
+  const MAX_SOURCES = 8;
+  // The same noises, pictures and recordings as Let Grandma Sleep. cls = what Shema classifies it as, c = its colour.
+  const TYPES = {
+    dog:      { name: 'Dog',          icon: '🐕', cls: 'dog',         c: 'dog',         L10: 66, tonal: 0 },
+    cat:      { name: 'Tomcat',       icon: '🐈', cls: 'background',  c: 'voices',      L10: 60, tonal: 0 },
+    squirrel: { name: 'Squirrel',     icon: '🐿️', cls: 'background',  c: 'engine',      L10: 58, tonal: 0 },
+    owl:      { name: 'Owl',          icon: '🦉', cls: 'background',  c: 'weather',     L10: 56, tonal: 0 },
+    taxi:     { name: 'Hooting taxi', icon: '🚐', cls: 'engine',      c: 'engine',      L10: 72, tonal: 5 },
+    boombox:  { name: 'Bass car',     icon: '🚗', cls: 'music',       c: 'music',       L10: 74, tonal: 5 },
+    vuvuzela: { name: 'Vuvuzela fan', icon: '📯', cls: 'music',       c: 'music',       L10: 76, tonal: 5 },
+    drill:    { name: 'Drill',        icon: '🛠️', cls: 'power_tools', c: 'power_tools', L10: 72, tonal: 0 },
+    alarm:    { name: 'Car alarm',    icon: '🚨', cls: 'alarm',       c: 'alarm',       L10: 76, tonal: 5 },
+    frog:     { name: 'Pool frog',    icon: '🐸', cls: 'background',  c: 'power_tools', L10: 58, tonal: 0 },
+    mosquito: { name: 'Mosquito',     icon: '🦟', cls: 'background',  c: 'alarm',       L10: 38, tonal: 0 },
+    hadeda:   { name: 'Hadeda ibis',  icon: '🐦', cls: 'background',  c: 'power_tools', L10: 78, tonal: 0 },
+    rooster:  { name: 'Rooster',      icon: '🐓', cls: 'background',  c: 'alarm',       L10: 78, tonal: 0 },
+    rain:     { name: 'Rain cloud',   icon: '🌧️', cls: 'weather',     c: 'weather',     L10: 0,  tonal: 0 },
+  };
+  const NOISE_ART = { dog: 'assets/dog.webp', cat: 'assets/cat.webp', squirrel: 'assets/squirrel.webp', owl: 'assets/owl.webp', taxi: 'assets/taxi.webp', vuvuzela: 'assets/vuvuzela.webp', frog: 'assets/frog.webp', mosquito: 'assets/mosquito.webp', hadeda: 'assets/hadeda.webp', rooster: 'assets/rooster.webp' };
+  const NOISE_SOUNDS = { dog: 'assets/dog.mp3', cat: 'assets/cat.mp3', squirrel: 'assets/squirrel.mp3', owl: 'assets/owl.mp3', taxi: 'assets/taxi.mp3', drill: 'assets/drill.mp3', alarm: 'assets/alarm.mp3', frog: 'assets/frog.mp3', mosquito: 'assets/mosquito.mp3', rooster: 'assets/rooster.mp3' };
+  const CALLS = new Set(['dog', 'cat', 'squirrel', 'owl', 'taxi', 'rooster', 'hadeda']);   // played once each time the noise starts; the rest loop
+  const CLS_NAME = { dog: 'dog', music: 'music', engine: 'engine', alarm: 'alarm', power_tools: 'power tools', voices: 'voices', weather: 'weather', unknown: 'unknown', background: 'background', quiet: 'quiet' };
+  const RAIN_dBA = 53;
+
+  const state = {
+    night: false, clock: 14 * 3600, sources: [], nextId: 1,
+    ambient: 45, las: 45, lasE: Math.pow(10, 4.5),
+    det: { open: false, quiet: 0, ev: null },
+    events: [], loud: null, sound: soundPref(),
+  };
+  const baseAmbient = () => state.night ? 35 : 45;
+  const limit = () => state.night ? 40 : 50;
+
+  const db2e = d => Math.pow(10, d / 10);
+  const e2db = e => 10 * Math.log10(Math.max(e, 1e-3));
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  function geom(s) {
+    const dx = s.x - DEV.x, dy = DEV.y - s.y;
+    const d = Math.max(1, Math.hypot(dx, dy));
+    let b = Math.atan2(dy, dx) * 180 / Math.PI;   // 0° = right along the wall, 90° = straight out, 180° = left
+    const behind = dy < 0;
+    return { d, b, behind };
+  }
+  // loudness pattern of each source over time (dB offset)
+  function pattern(s, t) {
+    const p = t + s.phase, cyc = c => p % c;
+    switch (s.type) {
+      case 'dog': { const c = cyc(1.2); return c < 0.28 || (c > 0.42 && c < 0.66) ? 0 : -40; }
+      case 'cat': return cyc(3.4) < 1.3 ? -2 + 2 * Math.sin(p * 9) : -40;
+      case 'squirrel': { const c = cyc(2.4); return c < 1.2 && (c % 0.14) < 0.08 ? 0 : -40; }
+      case 'owl': { const c = cyc(4); return c < 0.4 || (c > 0.65 && c < 1.3) ? 0 : -40; }
+      case 'taxi': { const c = cyc(1.9); return c < 0.16 || (c > 0.26 && c < 0.42) ? 0 : -40; }
+      case 'boombox': return cyc(0.5) < 0.18 ? 0 : -10;
+      case 'vuvuzela': return cyc(2.6) < 1.6 ? 0 : -40;
+      case 'drill': return cyc(4) < 2.4 ? 0 : -40;
+      case 'alarm': return Math.floor(p * 2) % 2 ? 0 : -2;
+      case 'frog': return cyc(0.9) < 0.22 ? 0 : -40;
+      case 'mosquito': return -1 + Math.sin(p * 13) * 1.5;
+      case 'hadeda': { const c = cyc(4.5); return c < 1.8 && (c % 0.6) < 0.45 ? 0 : -40; }
+      case 'rooster': return cyc(5) < 1.6 ? 0 : -40;
+    }
+    return 0;
+  }
+
+  let simT = 0;
+  function step(dt) {
+    simT += dt;
+    state.clock = (state.clock + dt) % 86400;
+    const raining = state.sources.some(s => s.type === 'rain');
+    state.ambient = raining ? e2db(db2e(baseAmbient()) + db2e(RAIN_dBA)) : baseAmbient();
+    const a = 1 - Math.exp(-dt / 1.0);               // S time weighting, tau = 1 s
+    let total = db2e(state.ambient);
+    let best = null;
+    for (const s of state.sources) {
+      if (s.type === 'rain') continue;
+      const g = geom(s);
+      s.g = g;
+      const inst = TYPES[s.type].L10 - 20 * Math.log10(g.d / 10) - (g.behind ? 12 : 0) + pattern(s, simT);
+      s.inst = inst;
+      s.e = s.e == null ? db2e(inst) : s.e + (db2e(inst) - s.e) * a;
+      s.las = e2db(s.e);
+      total += s.e;
+      const locatable = !g.behind && g.d <= RANGE;
+      if (locatable && (!best || s.las > best.las)) best = s;
+      // direction error grows as the source gets closer to the ambient
+      const snr = s.las - state.ambient;
+      const jit = clamp(14 / Math.max(1, snr - 2), 0.6, 9);
+      s.bErr = (s.bErr || 0) * 0.94 + (Math.random() - 0.5) * jit * 0.35;
+    }
+    state.lasE = state.lasE + (total - state.lasE) * Math.min(1, a * 1.5);
+    state.las = e2db(state.lasE);
+    state.loud = best && best.las >= state.ambient + 4 ? best : (best && state.det.open ? best : null);
+
+    // ---- detection: opens at ambient + 7, holds at ambient + 4, 2 s post-roll ----
+    const d = state.det;
+    const catchNow = state.las >= state.ambient + 7, hold = state.las >= state.ambient + 4;
+    if (!d.open && catchNow) openDetection();
+    if (d.open) {
+      d.quiet = hold ? 0 : d.quiet + dt;
+      const r = currentReading();
+      d.lead = r && r.cls !== d.ev.cls && d.ev.cls !== 'unknown' ? (d.lead || 0) + dt : 0;
+      if (d.lead > 2) { closeDetection(); openDetection(); }
+      else {
+        updateEvent(d.ev, dt, raining);
+        if (d.quiet > 2) closeDetection();
+      }
+    }
+  }
+
+  function currentReading() {
+    const s = state.loud;
+    if (!s) return null;
+    const bearing = clamp(s.g.b + s.bErr, 0, 180);
+    const snr = s.las - state.ambient;
+    let conf = clamp(52 + (snr - 7) * 4, 35, 96);
+    const rival = state.sources.find(o => o !== s && o.type !== 'rain' && o.las != null && s.las - o.las < 3 && o.las > state.ambient + 4);
+    if (rival) conf -= 18;
+    const rating = s.las + TYPES[s.type].tonal;
+    return { s, bearing, snr, conf: clamp(conf, 20, 96), rating, cls: TYPES[s.type].cls, err: Math.abs(s.bErr) + 1 };
+  }
+
+  function judge(cls, rating) {
+    const lim = limit(), acc = Math.max(lim, state.ambient);
+    const disturbing = rating > acc;
+    let nuisance = '';
+    if (cls === 'power_tools' && state.night) nuisance = 'Power tools after 18:00';
+    if (cls === 'music' && state.night && disturbing) nuisance = 'Loud music at night';
+    return { disturbing, acc, lim, nuisance, over7: rating >= state.ambient + 7 };
+  }
+
+  function openDetection() {
+    const r = currentReading();
+    const cls = r ? r.cls : 'unknown';
+    const b = r ? r.bearing : null;
+    const now = state.clock;
+    // same class + bearing within 20° + less than 30 s since it stopped = the same disturbance
+    const prev = state.events.find(e => !e.open && e.cls === cls && e.bearing != null && b != null && Math.abs(e.bearing - b) < 20 && (now - e.end) < 30 && (now - e.end) >= 0);
+    let ev;
+    if (prev) { ev = prev; ev.open = true; ev.detections++; }
+    else {
+      ev = { id: state.nextId++, cls, clsTime: {}, start: now, end: now, peak: 0, rating: 0, bearing: b, detections: 1, open: true, weather: false, verdict: null };
+      state.events.unshift(ev);
+      if (state.events.length > 30) state.events.pop();
+    }
+    state.det = { open: true, quiet: 0, lead: 0, ev };
+    if (r && r.s) r.s.flash = 1;
+  }
+  function updateEvent(ev, dt, raining) {
+    const r = currentReading();
+    ev.end = state.clock;
+    ev.peak = Math.max(ev.peak, state.las);
+    if (raining) ev.weather = true;
+    if (r) {
+      if (ev.cls === 'unknown') ev.cls = r.cls;
+      if (r.cls === ev.cls) { ev.bearing = r.bearing; ev.rating = Math.max(ev.rating, r.rating); }
+    }
+    ev.verdict = ev.cls === 'unknown' ? null : judge(ev.cls, ev.rating);
+  }
+  function closeDetection() {
+    state.det.ev.open = false;
+    state.det = { open: false, quiet: 0, ev: null };
+    eventsDirty = true;
+  }
+
+  // ================= sources =================
+  function addSource(type, x, y) {
+    if (state.sources.length >= MAX_SOURCES) return null;
+    const s = { id: state.nextId++, type, x: clamp(x, 2, W - 2), y: clamp(y, 2, H - 2), phase: Math.random() * 3, born: performance.now() };
+    state.sources.push(s);
+    if (state.sound) attachVoice(s);
+    refreshTray();
+    return s;
+  }
+  function removeSource(s) {
+    state.sources = state.sources.filter(o => o !== s);
+    detachVoice(s);
+    refreshTray();
+  }
+  function freeSpot() {
+    for (let i = 0; i < 40; i++) {
+      const ang = (20 + Math.random() * 140) * Math.PI / 180, r = 14 + Math.random() * 30;
+      const x = DEV.x + Math.cos(ang) * r, y = DEV.y - Math.sin(ang) * r;
+      if (state.sources.every(s => Math.hypot(s.x - x, s.y - y) > 9)) return { x, y };
+    }
+    return { x: DEV.x + (Math.random() - 0.5) * 60, y: 20 + Math.random() * 20 };
+  }
+
+  // ================= scene drawing =================
+  const cv = document.getElementById('scene'), ctx = cv.getContext('2d');
+  const wrap = document.getElementById('sceneWrap');
+  let cw = 0, ch = 0, dpr = 1, K = 1, OX = 0, OY = 0;
+  function resize() {
+    const r = wrap.getBoundingClientRect();
+    cw = r.width; ch = r.height; dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+    K = Math.min(cw / W, ch / H);
+    OX = (cw - W * K) / 2; OY = (ch - H * K) / 2;
+  }
+  new ResizeObserver(resize).observe(wrap);
+  const sx = x => OX + x * K, sy = y => OY + y * K;
+  const toWorld = (px, py) => ({ x: (px - OX) / K, y: (py - OY) / K });
+
+  let T = {};
+  function readTokens() {
+    const cs = getComputedStyle(document.documentElement);
+    const g = n => cs.getPropertyValue(n).trim();
+    T = {};
+    for (const n of ['bg-1', 'bg-2', 'line', 'line-bright', 'amber', 'red', 'text-0', 'text-1', 'text-2', 'sc-grass', 'sc-grass-2', 'sc-pave', 'sc-road', 'sc-road-line', 'sc-house', 'sc-house-edge', 'sc-roof-a', 'sc-roof-b', 'sc-roof-c', 'sc-roof-d', 'sc-tree', 'sc-tree-2', 'sc-jacaranda', 'sc-water', 'sc-label', 'sc-night', 'sc-lamp'])
+      T[n] = g('--' + n);
+    for (const c of ['alarm', 'dog', 'engine', 'music', 'power_tools', 'voices', 'weather', 'background', 'unknown']) T['cls-' + c] = g('--cls-' + c);
+  }
+  readTokens();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readTokens);
+  new MutationObserver(readTokens).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  // fixed neighbourhood layout (metres)
+  const ROAD = { y: 33, h: 9 };
+  const HOUSES = [
+    { x: 6, y: 9, w: 18, h: 13, roof: 'sc-roof-a' }, { x: 33, y: 7, w: 17, h: 15, roof: 'sc-roof-b' },
+    { x: 60, y: 9, w: 19, h: 13, roof: 'sc-roof-c' }, { x: 88, y: 8, w: 17, h: 14, roof: 'sc-roof-d' },
+    { x: 8, y: 49, w: 20, h: 14, roof: 'sc-roof-d' }, { x: 45, y: 60, w: 20, h: 14, roof: 'sc-roof-a', you: true },
+    { x: 82, y: 50, w: 20, h: 13, roof: 'sc-roof-b' },
+  ];
+  const TREES = [[28, 26, 3.4, 'j'], [55, 27, 3, 't'], [83, 26, 3.6, 'j'], [3, 28, 2.6, 't'], [104, 28, 2.8, 't'], [35, 52, 3.2, 'j'], [70, 51, 2.6, 't'], [99, 66, 3, 't'], [4, 67, 2.8, 'j'], [24, 45, 2.2, 't'], [77, 44.5, 2.2, 't']];
+  const LAMPS = [[18, 44], [55, 44], [92, 44], [36, 31], [74, 31]];
+  const POOL = { x: 64, y: 13.5, w: 9, h: 5 };
+
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
+
+  function drawScene(now) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = T['sc-grass']; ctx.fillRect(0, 0, cw, ch);
+    // lawn stripes
+    ctx.fillStyle = T['sc-grass-2'];
+    for (let x = -2; x < W + 4; x += 8) ctx.fillRect(sx(x), 0, 4 * K, ch);
+    // pavements + road across the full width
+    ctx.fillStyle = T['sc-pave']; ctx.fillRect(0, sy(ROAD.y - 2.2), cw, (ROAD.h + 4.4) * K);
+    ctx.fillStyle = T['sc-road']; ctx.fillRect(0, sy(ROAD.y), cw, ROAD.h * K);
+    ctx.strokeStyle = T['sc-road-line']; ctx.lineWidth = Math.max(1.5, 0.35 * K); ctx.setLineDash([3 * K, 3 * K]);
+    ctx.beginPath(); ctx.moveTo(0, sy(ROAD.y + ROAD.h / 2)); ctx.lineTo(cw, sy(ROAD.y + ROAD.h / 2)); ctx.stroke(); ctx.setLineDash([]);
+    // driveway to your house
+    ctx.fillStyle = T['sc-pave']; ctx.fillRect(sx(66), sy(ROAD.y + ROAD.h), 6 * K, (60 - ROAD.y - ROAD.h) * K);
+    // street name
+    ctx.fillStyle = T['sc-label']; ctx.font = `500 ${Math.max(9, 1.5 * K)}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('JACARANDA STREET', sx(4), sy(ROAD.y + ROAD.h / 2 - 2.4));
+    // pool
+    ctx.fillStyle = T['sc-water']; rr(sx(POOL.x), sy(POOL.y), POOL.w * K, POOL.h * K, 1.2 * K); ctx.fill();
+    // houses
+    for (const h of HOUSES) {
+      ctx.fillStyle = T[h.roof]; ctx.strokeStyle = T['sc-house-edge']; ctx.lineWidth = 1;
+      rr(sx(h.x), sy(h.y), h.w * K, h.h * K, 0.8 * K); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = T['sc-house-edge']; ctx.globalAlpha = 0.6;
+      ctx.beginPath(); ctx.moveTo(sx(h.x + 1), sy(h.y + h.h / 2)); ctx.lineTo(sx(h.x + h.w - 1), sy(h.y + h.h / 2)); ctx.stroke();
+      ctx.globalAlpha = 1;
+      if (h.you) {
+        ctx.fillStyle = T['text-1']; ctx.textAlign = 'center';
+        ctx.font = `600 ${Math.max(9, 1.6 * K)}px ${getComputedStyle(document.body).fontFamily}`;
+        ctx.fillText('YOUR HOUSE', sx(h.x + h.w / 2), sy(h.y + 8.5));
+      }
+    }
+    // trees (jacarandas are purple)
+    for (const [x, y, r, k] of TREES) {
+      ctx.fillStyle = k === 'j' ? T['sc-jacaranda'] : T['sc-tree'];
+      ctx.beginPath(); ctx.arc(sx(x), sy(y), r * K, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = k === 'j' ? T['sc-jacaranda'] : T['sc-tree-2']; ctx.globalAlpha = 0.6;
+      ctx.beginPath(); ctx.arc(sx(x - r * 0.3), sy(y - r * 0.3), r * 0.55 * K, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+    }
+    // night
+    if (state.night) {
+      ctx.fillStyle = T['sc-night']; ctx.fillRect(0, 0, cw, ch);
+      for (const [x, y] of LAMPS) {
+        const g = ctx.createRadialGradient(sx(x), sy(y), 0, sx(x), sy(y), 9 * K);
+        g.addColorStop(0, T['sc-lamp']); g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sx(x), sy(y), 9 * K, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    drawCoverage(now);
+    drawWaves(now);
+    drawRain(now);
+    drawRay(now);
+    drawSources(now);
+    drawDevice(now);
+  }
+
+  function drawCoverage(now) {
+    const x = sx(DEV.x), y = sy(DEV.y), R = RANGE * K;
+    ctx.save();
+    ctx.fillStyle = T['amber']; ctx.globalAlpha = state.det.open ? 0.10 : 0.06;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, R, Math.PI, 0); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 0.7; ctx.strokeStyle = T['amber']; ctx.lineWidth = 1.5; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.arc(x, y, R, Math.PI, 0); ctx.stroke(); ctx.setLineDash([]);
+    // bearing ticks
+    ctx.globalAlpha = 0.9; ctx.fillStyle = T['amber']; ctx.font = `500 ${Math.max(9, 1.4 * K)}px "JetBrains Mono", monospace`;
+    for (const deg of [0, 45, 90, 135, 180]) {
+      const a = deg * Math.PI / 180, tx = x + Math.cos(a) * (R + 2.6 * K), ty = y - Math.sin(a) * (R + 2.6 * K);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if (ty > 6 && tx > 10 && tx < cw - 10) ctx.fillText(deg + '°', tx, ty);
+    }
+    ctx.textAlign = 'right'; ctx.globalAlpha = 0.8;
+    const lx = x + Math.cos(Math.PI * 0.62) * R, ly = y - Math.sin(Math.PI * 0.62) * R;
+    if (ly > 14) ctx.fillText('50 m', lx - 4, ly - 8);
+    ctx.restore();
+  }
+
+  const waves = [];
+  function emitWaves(now) {
+    for (const s of state.sources) {
+      if (s.type === 'rain') continue;
+      const on = pattern(s, simT) > -10;
+      s.lastWave = s.lastWave || 0;
+      const gap = s.type === 'boombox' || s.type === 'alarm' ? 500 : s.type === 'dog' || s.type === 'frog' ? 400 : 650;
+      if (on && now - s.lastWave > gap) { waves.push({ x: s.x, y: s.y, t0: now, c: T['cls-' + TYPES[s.type].c] }); s.lastWave = now; }
+    }
+    while (waves.length > 60) waves.shift();
+  }
+  function drawWaves(now) {
+    if (reduced) return;
+    ctx.save(); ctx.lineWidth = 2;
+    for (let i = waves.length - 1; i >= 0; i--) {
+      const w = waves[i], age = (now - w.t0) / 1600;
+      if (age > 1) { waves.splice(i, 1); continue; }
+      ctx.strokeStyle = w.c; ctx.globalAlpha = 0.55 * (1 - age);
+      ctx.beginPath(); ctx.arc(sx(w.x), sy(w.y), (3 + age * 16) * K, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  const drops = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), v: 0.6 + Math.random() * 0.6 }));
+  function drawRain(now) {
+    if (!state.sources.some(s => s.type === 'rain')) return;
+    ctx.save(); ctx.strokeStyle = T['cls-weather']; ctx.globalAlpha = 0.35; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (const d of drops) {
+      const y = ((d.y + now / 1000 * d.v) % 1) * ch, x = d.x * cw;
+      ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 9);
+    }
+    ctx.stroke(); ctx.restore();
+  }
+  function drawRay(now) {
+    const r = state.det.open ? currentReading() : null;
+    if (!r) return;
+    const x = sx(DEV.x), y = sy(DEV.y), a = r.bearing * Math.PI / 180, L = Math.min(RANGE, r.s.g.d) * K;
+    ctx.save();
+    const spread = clamp(r.err, 1, 9) * Math.PI / 180;
+    ctx.fillStyle = T['amber']; ctx.globalAlpha = 0.16;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, L, -a - spread, -a + spread); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 0.95; ctx.strokeStyle = T['amber']; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * L, y - Math.sin(a) * L); ctx.stroke();
+    ctx.restore();
+  }
+  function tokenR() { return Math.max(15, 2.7 * K); }
+  function drawSources(now) {
+    const R = tokenR();
+    const emoji = `${Math.round(R * 1.05)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+    for (const s of state.sources) {
+      const x = sx(s.x), y = sy(s.y), c = T['cls-' + TYPES[s.type].c];
+      const pop = clamp((now - s.born) / 250, 0, 1);
+      const rr_ = R * (0.6 + 0.4 * (reduced ? 1 : easeOut(pop)));
+      if (state.loud === s && state.det.open) {
+        ctx.save(); ctx.strokeStyle = T['red']; ctx.lineWidth = 2; ctx.globalAlpha = 0.5 + 0.4 * Math.sin(now / 160);
+        ctx.beginPath(); ctx.arc(x, y, rr_ + 7, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+      }
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.18)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
+      ctx.fillStyle = T['bg-1']; ctx.beginPath(); ctx.arc(x, y, rr_, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = c; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, rr_, 0, Math.PI * 2); ctx.stroke();
+      const spr = SPR[s.type];
+      if (spr) {
+        const busy = pattern(s, simT) > -12;
+        const fr = busy ? Math.floor((now / 1000 + s.phase) * spr.fps) % spr.frames : 0, fw = spr.img.width / spr.frames, sz = rr_ * 2.25;
+        ctx.drawImage(spr.img, fr * fw, 0, fw, spr.img.height, x - sz / 2, y - sz / 2, sz, sz * spr.img.height / fw);
+      } else {
+        ctx.font = emoji; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(TYPES[s.type].icon, x, y + 1);
+      }
+      if (s === drag.src && s.g) {
+        const txt = s.type === 'rain' ? 'rain on the mics' : `${Math.round(s.g.d)} m · ${s.g.behind ? 'behind the wall' : Math.round(clamp(s.g.b, 0, 180)) + '°'}`;
+        ctx.font = `500 12px "JetBrains Mono", monospace`;
+        const w = ctx.measureText(txt).width + 14;
+        ctx.fillStyle = T['bg-1']; ctx.strokeStyle = T['line-bright']; ctx.lineWidth = 1;
+        rr(x - w / 2, y - R - 30, w, 22, 6); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = T['text-0']; ctx.fillText(txt, x, y - R - 19);
+      }
+    }
+  }
+  function drawDevice(now) {
+    const x = sx(DEV.x), y = sy(DEV.y);
+    ctx.save();
+    if (!reduced) {
+      const p = (now % 2000) / 2000;
+      ctx.strokeStyle = T['amber']; ctx.globalAlpha = 0.5 * (1 - p); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, 6 + p * 18, Math.PI, 0); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = state.det.open ? T['red'] : T['amber'];
+    rr(x - 9, y - 4, 18, 8, 3); ctx.fill();
+    ctx.fillStyle = T['bg-1'];
+    for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(x - 6 + i * 4, y, 1.3, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = T['text-0']; ctx.font = `700 ${Math.max(10, 1.5 * K)}px "JetBrains Mono", monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText('SHEMA', x, y + 7);
+    ctx.restore();
+  }
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ================= drag & drop =================
+  const drag = { src: null, type: null, ghost: null, sx: 0, sy: 0, moved: false, pid: null };
+  const bin = document.getElementById('bin');
+  const hint = document.getElementById('hint');
+  function overRect(el, x, y) { const r = el.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; }
+  function canvasPoint(e) { const r = cv.getBoundingClientRect(); return { px: e.clientX - r.left, py: e.clientY - r.top }; }
+
+  cv.addEventListener('pointerdown', e => {
+    const { px, py } = canvasPoint(e);
+    const R = tokenR() + 6;
+    let hit = null, hd = 1e9;
+    for (const s of state.sources) { const d = Math.hypot(sx(s.x) - px, sy(s.y) - py); if (d < R && d < hd) { hit = s; hd = d; } }
+    if (!hit) return;
+    drag.src = hit; drag.pid = e.pointerId; cv.setPointerCapture(e.pointerId);
+    bin.hidden = false; cv.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+  cv.addEventListener('pointermove', e => {
+    if (drag.src && e.pointerId === drag.pid) {
+      const { px, py } = canvasPoint(e), w = toWorld(px, py);
+      drag.src.x = clamp(w.x, 1, W - 1); drag.src.y = clamp(w.y, 1, H - 1);
+      bin.classList.toggle('hot', overRect(bin, e.clientX, e.clientY) || !overRect(cv, e.clientX, e.clientY));
+      return;
+    }
+    const { px, py } = canvasPoint(e), R = tokenR() + 6;
+    cv.style.cursor = state.sources.some(s => Math.hypot(sx(s.x) - px, sy(s.y) - py) < R) ? 'grab' : 'default';
+  });
+  function endCanvasDrag(e) {
+    if (!drag.src || e.pointerId !== drag.pid) return;
+    if (overRect(bin, e.clientX, e.clientY) || !overRect(cv, e.clientX, e.clientY)) removeSource(drag.src);
+    drag.src = null; bin.hidden = true; bin.classList.remove('hot'); cv.style.cursor = 'default';
+  }
+  cv.addEventListener('pointerup', endCanvasDrag);
+  cv.addEventListener('pointercancel', endCanvasDrag);
+
+  // tray
+  const tray = document.getElementById('tray');
+  for (const [type, t] of Object.entries(TYPES)) {
+    const b = document.createElement('button');
+    b.className = 'src'; b.dataset.type = type; b.type = 'button';
+    b.style.setProperty('--c', `var(--cls-${t.c})`);
+    b.innerHTML = `${NOISE_ART[type] ? `<span class="ic spr" aria-hidden="true" style="background-image: url(${NOISE_ART[type]})"></span>` : `<span class="ic" aria-hidden="true">${t.icon}</span>`}<span class="nm">${t.name}</span>`;
+    b.setAttribute('aria-label', `Add ${t.name}`);
+    b.addEventListener('pointerdown', e => {
+      if (b.disabled) return;
+      drag.type = type; drag.pid = e.pointerId; drag.sx = e.clientX; drag.sy = e.clientY; drag.moved = false;
+      b.setPointerCapture(e.pointerId);
+    });
+    b.addEventListener('pointermove', e => {
+      if (drag.type !== type || e.pointerId !== drag.pid) return;
+      const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+      // on touch, a sideways swipe scrolls the tray; only an upward drag picks the sound up
+      if (!drag.moved && e.pointerType !== 'mouse' && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) { drag.type = null; return; }
+      if (!drag.moved && (e.pointerType === 'mouse' ? Math.hypot(dx, dy) > 6 : (-dy > 10 && Math.abs(dy) > Math.abs(dx)))) {
+        drag.moved = true;
+        const g = document.createElement('div'); g.className = 'ghost';
+        if (NOISE_ART[type]) { g.classList.add('spr'); g.style.backgroundImage = `url(${NOISE_ART[type]})`; } else g.textContent = t.icon;
+        g.style.setProperty('--c', `var(--cls-${t.c})`); document.body.appendChild(g); drag.ghost = g;
+      }
+      if (drag.ghost) { drag.ghost.style.left = e.clientX + 'px'; drag.ghost.style.top = e.clientY + 'px'; }
+    });
+    const end = e => {
+      if (e.type === 'pointercancel' && drag.ghost) { drag.ghost.remove(); drag.ghost = null; }
+      if (drag.type !== type || e.pointerId !== drag.pid) return;
+      if (drag.moved) {
+        if (e.type === 'pointerup' && overRect(cv, e.clientX, e.clientY)) {
+          const { px, py } = canvasPoint(e), w = toWorld(px, py); addSource(type, w.x, w.y);
+        }
+      } else if (e.type === 'pointerup') { const p = freeSpot(); addSource(type, p.x, p.y); }
+      if (drag.ghost) drag.ghost.remove();
+      drag.ghost = null; drag.type = null;
+      hint.hidden = true;
+    };
+    b.addEventListener('pointerup', end);
+    b.addEventListener('pointercancel', end);
+    b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const p = freeSpot(); addSource(type, p.x, p.y); hint.hidden = true; } });
+    tray.appendChild(b);
+  }
+  const clearBtn = document.createElement('button');
+  clearBtn.className = 'btn'; clearBtn.type = 'button'; clearBtn.textContent = 'Clear street';
+  clearBtn.addEventListener('click', () => { for (const s of [...state.sources]) removeSource(s); });
+  tray.appendChild(clearBtn);
+  function refreshTray() {
+    const full = state.sources.length >= MAX_SOURCES;
+    tray.querySelectorAll('.src').forEach(b => { b.disabled = full; });
+  }
+
+  // ================= day / night =================
+  const btnDay = document.getElementById('btnDay'), btnNight = document.getElementById('btnNight');
+  function setNight(n) {
+    state.night = n; state.clock = n ? 23 * 3600 : 14 * 3600;
+    btnDay.setAttribute('aria-pressed', String(!n)); btnNight.setAttribute('aria-pressed', String(n));
+    eventsDirty = true;
+  }
+  btnDay.addEventListener('click', () => setNight(false));
+  btnNight.addEventListener('click', () => setNight(true));
+
+  // ================= sound (on by default; recordings where there are any, synthesised otherwise) =================
+  let ac = null, master = null, noiseBuf = null;
+  const btnSound = document.getElementById('btnSound');
+  const SPR = {}, BUF = {};
+  for (const [k, v] of Object.entries(NOISE_ART)) { const im = new Image(); im.onload = () => { SPR[k] = { img: im, frames: 6, fps: 9 }; }; im.src = v; }
+  const SND = {
+    dog:      { w: 'sawtooth', ff: 900,  q: 2,   f: c => 500 - (c % 0.24) * 900 },
+    cat:      { w: 'sawtooth', ff: 1300, q: 5,   f: c => 520 + 220 * Math.sin(c * 2.6) },
+    squirrel: { w: 'square',   ff: 3200, q: 3,   f: () => 2600, n: 0.5 },
+    owl:      { w: 'sine',     ff: 900,  q: 1,   f: c => 360 - (c % 0.65) * 60 },
+    taxi:     { w: 'square',   ff: 2200, q: 1,   f: () => 466 },
+    boombox:  { w: 'square',   ff: 260,  q: 2,   f: c => (Math.floor(c * 2) % 4 < 2) ? 55 : 73 },
+    vuvuzela: { w: 'sawtooth', ff: 800,  q: 1.2, f: () => 233 },
+    drill:    { w: 'sawtooth', ff: 1700, q: 1.5, f: c => 240 + Math.sin(c * 6) * 12, n: 0.2 },
+    alarm:    { w: 'square',   ff: 2600, q: 1,   f: c => Math.floor(c * 2) % 2 ? 1050 : 700 },
+    frog:     { w: 'square',   ff: 600,  q: 2,   f: () => 115 },
+    mosquito: { w: 'sawtooth', ff: 1500, q: 7,   f: c => 640 + Math.sin(c * 30) * 25 },
+    hadeda:   { w: 'sawtooth', ff: 1150, q: 2.5, f: c => 560 - (c % 0.6) * 220 },
+    rooster:  { w: 'sawtooth', ff: 1300, q: 2,   f: c => { const x = (c % 5) / 1.6; return 480 + 380 * Math.sin(Math.min(1, x) * Math.PI); } },
+  };
+  function ensureAudio() {
+    if (!ac) {
+      let out = null;
+      const shared = SHELL && SHELL.audio();
+      if (shared) { ac = shared.ac; out = shared.out; }
+      else { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false; ac = new AC(); out = ac.destination; }
+      master = ac.createGain(); master.gain.value = state.sound ? 0.7 : 0;
+      const comp = ac.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 8;
+      master.connect(comp); comp.connect(out);
+      noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+      const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      for (const [k, v] of Object.entries(NOISE_SOUNDS)) {
+        fetch(v).then(r => r.arrayBuffer()).then(a => ac.decodeAudioData(a)).then(b => {
+          BUF[k] = b;
+          // a noise already on the street switches from the synthesised stand-in to the recording
+          if (state.sound) for (const s of state.sources) if (s.type === k && s.voice && !s.voice.real) { detachVoice(s); attachVoice(s); }
+        }).catch(() => { });
+      }
+    }
+    if (ac.state === 'suspended') ac.resume();
+    if (state.sound) for (const s of state.sources) attachVoice(s);
+    return true;
+  }
+  function attachVoice(s) {
+    if (!ac || s.voice) return;
+    const out = ac.createGain(); out.gain.value = 0;
+    const pan = ac.createStereoPanner ? ac.createStereoPanner() : null;
+    if (pan) { out.connect(pan); pan.connect(master); } else out.connect(master);
+    if (s.type === 'rain') {
+      const n = ac.createBufferSource(); n.buffer = noiseBuf; n.loop = true;
+      const f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 900;
+      const f2 = ac.createBiquadFilter(); f2.type = 'lowpass'; f2.frequency.value = 7000;
+      const g = ac.createGain(); g.gain.value = 0.35; n.connect(f); f.connect(f2); f2.connect(g); g.connect(out); n.start();
+      s.voice = { out, pan, nodes: [n, f, f2, g] }; return;
+    }
+    if (BUF[s.type]) {
+      if (CALLS.has(s.type)) { s.voice = { out, pan, real: true, call: true, nodes: [], wasOn: false, busyUntil: 0 }; return; }
+      const src = ac.createBufferSource(); src.buffer = BUF[s.type]; src.loop = true; src.connect(out); src.start(0, Math.random() * BUF[s.type].duration);
+      s.voice = { out, pan, real: true, nodes: [src] }; return;
+    }
+    const d = SND[s.type];
+    const o = ac.createOscillator(); o.type = d.w; o.frequency.value = d.f(0);
+    const f = ac.createBiquadFilter(); f.type = d.ff < 700 ? 'lowpass' : 'bandpass'; f.frequency.value = d.ff; f.Q.value = d.q;
+    o.connect(f); f.connect(out); o.start();
+    const nodes = [o, f];
+    if (d.n) { const ns = ac.createBufferSource(); ns.buffer = noiseBuf; ns.loop = true; const ng = ac.createGain(); ng.gain.value = d.n; ns.connect(ng); ng.connect(f); ns.start(); nodes.push(ns, ng); }
+    s.voice = { out, pan, o, nodes };
+  }
+  function detachVoice(s) {
+    const v = s.voice; if (!v || !ac) return;
+    try { v.out.gain.setTargetAtTime(0, ac.currentTime, 0.04); } catch (e) { }
+    setTimeout(() => { for (const n of v.nodes) { try { n.stop && n.stop(); } catch (e) { } try { n.disconnect(); } catch (e) { } } try { v.out.disconnect(); v.pan && v.pan.disconnect(); } catch (e) { } }, 160);
+    s.voice = null;
+  }
+  function updateAudio() {
+    if (!state.sound || !ac) return;
+    const t = ac.currentTime;
+    for (const s of state.sources) {
+      const v = s.voice; if (!v) continue;
+      if (s.type === 'rain') { v.out.gain.setTargetAtTime(0.25, t, 0.1); continue; }
+      if (!s.g) continue;
+      const p = pattern(s, simT);
+      const full = TYPES[s.type].L10 - 20 * Math.log10(s.g.d / 10) - (s.g.behind ? 12 : 0);
+      const on = p > -20;
+      let amp;
+      if (v.call) {
+        if (on && !v.wasOn && t >= v.busyUntil) {
+          const src = ac.createBufferSource(); src.buffer = BUF[s.type]; src.connect(v.out); src.start();
+          v.nodes.push(src); if (v.nodes.length > 4) v.nodes.shift();
+          v.busyUntil = t + BUF[s.type].duration * 0.85;
+        }
+        v.wasOn = on;
+        amp = clamp(Math.pow(10, (full - 78) / 20), 0, 0.8);
+      } else if (v.real) amp = (on || s.type !== 'drill') ? clamp(Math.pow(10, (full - 78) / 20), 0, 0.8) : 0;
+      else amp = !on ? 0 : clamp(Math.pow(10, (full + p - 80) / 20), 0, 0.6);
+      v.out.gain.setTargetAtTime(amp, t, 0.03);
+      if (v.o) v.o.frequency.setTargetAtTime(SND[s.type].f(simT + s.phase), t, 0.02);
+      if (v.pan) v.pan.pan.setTargetAtTime(clamp((s.x - DEV.x) / 50, -1, 1) * 0.85, t, 0.08);
+    }
+  }
+  function soundUi() {
+    btnSound.setAttribute('aria-pressed', String(state.sound));
+    document.getElementById('sndLabel').textContent = state.sound ? 'Sound on' : 'Sound off';
+    btnSound.title = state.sound ? 'Sound on' : 'Sound off';
+    document.getElementById('sndWaves').setAttribute('d', state.sound ? 'M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12' : 'M23 9l-6 6M17 9l6 6');
+  }
+  btnSound.addEventListener('click', () => {
+    state.sound = !state.sound;
+    try { localStorage.setItem('shema.sound', state.sound ? '1' : '0'); } catch (e) { }
+    if (state.sound) {
+      if (!ensureAudio()) { state.sound = false; soundUi(); return; }
+      master.gain.setTargetAtTime(0.7, ac.currentTime, 0.05);
+      for (const s of state.sources) attachVoice(s);
+    } else if (ac) {
+      master.gain.setTargetAtTime(0, ac.currentTime, 0.05);
+      for (const s of state.sources) detachVoice(s);
+    }
+    soundUi();
+  });
+  document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else if (state.sound) ac.resume(); });
+  document.getElementById('btnMode').addEventListener('click', () => { if (SHELL) SHELL.openPicker(); else location.href = 'index.html'; });
+  window.__shemaStop = () => { for (const s of state.sources) detachVoice(s); try { master && master.disconnect(); } catch (e) { } state.sound = false; };
+
+  // ================= panel =================
+  const $ = id => document.getElementById(id);
+  const fmtClock = s => { s = Math.floor(s) % 86400; const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60; return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')}`; };
+  const fmtDur = s => s < 60 ? `${Math.max(1, Math.round(s))} s` : `${Math.floor(s / 60)} min ${Math.round(s % 60)} s`;
+  const pct = v => clamp((v - 30) / 70 * 100, 0, 100); // meter 30–100 dB(A)
+  const dial = $('dial'), dctx = dial.getContext('2d');
+  function drawDial(b) {
+    const w = dial.width, h = dial.height, cx = w / 2, cy = h - 8, R = h - 16;
+    dctx.clearRect(0, 0, w, h);
+    dctx.lineWidth = 6; dctx.strokeStyle = T['line']; dctx.lineCap = 'round';
+    dctx.beginPath(); dctx.arc(cx, cy, R, Math.PI, 0); dctx.stroke();
+    if (b != null) {
+      const a = b * Math.PI / 180;
+      dctx.strokeStyle = T['amber']; dctx.lineWidth = 5;
+      dctx.beginPath(); dctx.moveTo(cx, cy); dctx.lineTo(cx + Math.cos(a) * (R - 2), cy - Math.sin(a) * (R - 2)); dctx.stroke();
+    }
+    dctx.fillStyle = T['text-0']; dctx.beginPath(); dctx.arc(cx, cy, 5, 0, Math.PI * 2); dctx.fill();
+  }
+  const chipHtml = cls => `<span class="chip" style="--c: var(--cls-${cls === 'quiet' ? 'background' : cls})"><span class="d"></span>${CLS_NAME[cls] || cls}</span>`;
+  let eventsDirty = true, lastChip = '';
+  function updatePanel() {
+    const open = state.det.open, r = open ? currentReading() : null;
+    $('pill').classList.toggle('rec', open);
+    $('pillText').textContent = open ? 'RECORDING' : 'LISTENING';
+    $('clock').textContent = fmtClock(state.clock);
+    $('lvl').textContent = state.las.toFixed(1);
+    $('ambNote').textContent = `ambient ${state.ambient.toFixed(1)}`;
+    const fill = $('meterFill');
+    fill.style.width = pct(state.las) + '%';
+    const vv = r ? judge(r.cls, r.rating) : null;
+    fill.style.background = vv && vv.disturbing ? 'var(--red)' : state.las >= state.ambient + 7 ? 'var(--amber)' : 'var(--green)';
+    $('tAmb').style.left = pct(state.ambient) + '%';
+    $('tCatch').style.left = pct(state.ambient + 7) + '%';
+    $('tLimit').style.left = pct(limit()) + '%';
+    $('limTxt').textContent = limit();
+
+    // direction + source
+    if (r) {
+      $('dirVal').textContent = Math.round(r.bearing) + '°';
+      $('dirSub').textContent = `±${Math.round(r.err + 1)}° · ${Math.round(r.s.g.d)} m away`;
+      drawDial(r.bearing);
+      const c = chipHtml(r.cls); if (c !== lastChip) { $('srcChip').innerHTML = c; lastChip = c; }
+      $('confBar').style.width = r.conf + '%'; $('confBar').style.setProperty('--c', `var(--cls-${r.cls})`);
+      $('confTxt').textContent = `${Math.round(r.conf)} % sure`;
+    } else {
+      $('dirVal').textContent = '—';
+      const behind = open && state.sources.some(s => s.g && (s.g.behind || s.g.d > RANGE));
+      $('dirSub').textContent = behind ? 'outside the 180° view' : 'no source';
+      drawDial(null);
+      const c = chipHtml(open ? 'unknown' : 'quiet'); if (c !== lastChip) { $('srcChip').innerHTML = c; lastChip = c; }
+      $('confBar').style.width = '0%'; $('confTxt').textContent = open ? 'cannot locate it' : '—';
+    }
+
+    // verdict
+    const head = $('vHead'), l1 = $('vLine1'), l2 = $('vLine2');
+    const raining = state.sources.some(s => s.type === 'rain');
+    if (!open) {
+      head.className = 'verdict-h idle'; head.textContent = raining ? 'Rain on the mics' : 'All quiet';
+      l1.textContent = raining ? 'Rain is weather, never a disturbance. It lifts the ambient, so other sounds need to be louder to count.' : 'Nothing is louder than the ambient + 7 dB, so nothing is recorded.';
+      l2.textContent = '';
+    } else if (!r) {
+      head.className = 'verdict-h idle'; head.textContent = 'Recording, source unknown';
+      l1.textContent = 'Something is loud, but it is behind the wall or further than 50 m, so Shema cannot locate or judge it.';
+      l2.textContent = '';
+    } else {
+      const v = judge(r.cls, r.rating);
+      head.className = 'verdict-h ' + (v.disturbing ? 'bad' : 'ok');
+      head.textContent = v.disturbing ? 'Disturbing noise' : 'Within the limit';
+      const tonal = TYPES[r.s.type].tonal ? ` (incl. +${TYPES[r.s.type].tonal} dB for its tone)` : '';
+      l1.innerHTML = `Rating <b>${r.rating.toFixed(1)}</b>${tonal} ${v.disturbing ? '>' : '≤'} acceptable <b>${v.acc.toFixed(1)}</b> dB(A), the ${state.night ? 'night' : 'day'} limit or the ambient, whichever is higher.`;
+      l2.innerHTML = (v.nuisance ? `<b style="color: var(--amber)">Nuisance:</b> ${v.nuisance}. ` : '') + `It is <b>${(r.rating - state.ambient).toFixed(1)} dB</b> over the ambient.`;
+    }
+
+    if (eventsDirty || open) renderEvents();
+  }
+  function renderEvents() {
+    eventsDirty = false;
+    const list = $('events');
+    const evs = state.events;
+    $('evCount').textContent = `${evs.length} event${evs.length === 1 ? '' : 's'}`;
+    if (!evs.length) { list.innerHTML = '<div class="empty">No events yet. Shema keeps one record per disturbance, even if it stops and starts.</div>'; return; }
+    list.innerHTML = evs.slice(0, 12).map(e => {
+      const v = e.verdict;
+      const badge = e.open ? '<span class="badge bad">rec</span>' : !v ? '<span class="badge idle">unknown</span>' : v.nuisance ? '<span class="badge nui">nuisance</span>' : v.disturbing ? '<span class="badge bad">disturbing</span>' : '<span class="badge ok">ok</span>';
+      const meta = [`${fmtDur(e.end - e.start)}`, `peak ${e.peak.toFixed(1)} dB(A)`, e.bearing != null ? `${Math.round(e.bearing)}°` : 'no bearing'];
+      if (e.detections > 1) meta.push(`${e.detections} detections, 1 record`);
+      if (e.weather) meta.push('rain flagged');
+      return `<div class="ev${e.open ? ' open' : ''}"><span class="t">${fmtClock(e.start)}</span><span>${chipHtml(e.cls)}</span>${badge}<span class="m">${meta.join(' · ')}</span></div>`;
+    }).join('');
+  }
+  $('btnClearLog').addEventListener('click', () => { state.events = state.events.filter(e => e.open); eventsDirty = true; renderEvents(); });
+
+  // ================= explainer cards =================
+  let slide = 0;
+  const slides = [...document.querySelectorAll('#deck .slide')], dots = [...document.querySelectorAll('#dots i')];
+  function showSlide(i, dir) {
+    slide = clamp(i, 0, slides.length - 1);
+    slides.forEach((el, k) => { el.hidden = k !== slide; el.classList.toggle('back', dir < 0); });
+    dots.forEach((d, k) => d.classList.toggle('on', k === slide));
+    $('btnBack').style.visibility = slide === 0 ? 'hidden' : 'visible';
+    $('btnNext').textContent = slide === slides.length - 1 ? 'Open the street' : 'Next';
+  }
+  $('btnNext').addEventListener('click', () => { if (slide === slides.length - 1) $('startCard').hidden = true; else showSlide(slide + 1, 1); });
+  $('btnBack').addEventListener('click', () => showSlide(slide - 1, -1));
+  let swipeX = null;
+  $('deck').addEventListener('pointerdown', e => { swipeX = e.clientX; });
+  $('deck').addEventListener('pointerup', e => { if (swipeX == null) return; const dx = e.clientX - swipeX; swipeX = null; if (Math.abs(dx) > 50) showSlide(slide + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1); });
+  document.addEventListener('keydown', e => {
+    if ($('startCard').hidden || document.body.classList.contains('intro-on')) return;
+    if (e.key === 'ArrowRight') showSlide(slide + 1, 1);
+    if (e.key === 'ArrowLeft') showSlide(slide - 1, -1);
+  });
+  showSlide(0, 1);
+
+  // ================= loop =================
+  let last = performance.now(), lastUi = 0;
+  let paused = false;
+  window.__shemaPause = p => { paused = p; if (ac && master) master.gain.setTargetAtTime(p || !state.sound ? 0 : 0.7, ac.currentTime, 0.05); };
+  function frame(now) {
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (paused) { requestAnimationFrame(frame); return; }
+    step(dt);
+    emitWaves(now);
+    if (cw > 0) drawScene(now);
+    updateAudio();
+    if (now - lastUi > 100) { lastUi = now; updatePanel(); }
+    requestAnimationFrame(frame);
+  }
+  resize();
+  // a working street to start with: a dog barking across the road
+  addSource('dog', 40, 22);
+  soundUi();
+  // sound is on by default; browsers only let it start after a tap, so unlock it on the first one
+  if (state.sound && SHELL) ensureAudio();
+  const unlock = () => { if (state.sound) ensureAudio(); };
+  window.addEventListener('pointerdown', unlock, { once: true, capture: true });
+  window.addEventListener('keydown', unlock, { once: true, capture: true });
+  requestAnimationFrame(frame);
+
+  // ================= opening sequence (same as the Shema app) =================
+  (function () {
+    const intro = document.getElementById('intro');
+    const target = document.querySelector('.topbar .shema-logo');
+    if (EMBED && intro) intro.remove();
+    if (EMBED || !intro || !target) { document.body.classList.remove('intro-on'); return; }
+    const logo = target.cloneNode(true);
+    intro.querySelector('.intro-stage').appendChild(logo);
+    const INTRO_HOLD_MS = 2950, INTRO_FLY_MS = 800;
+    let flying = false, holdTimer = 0;
+    function fly() {
+      if (flying) return;
+      flying = true; clearTimeout(holdTimer);
+      intro.classList.add('done');
+      const from = logo.getBoundingClientRect(), to = target.getBoundingClientRect();
+      void logo.offsetWidth;
+      intro.classList.add('fly');
+      if (to.width > 0 && from.width > 0) logo.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width})`;
+      else logo.style.opacity = '0';
+      setTimeout(finish, INTRO_FLY_MS);
+    }
+    function finish() { document.body.classList.remove('intro-on'); intro.remove(); document.removeEventListener('keydown', onKey, true); }
+    function onKey(e) { e.preventDefault(); e.stopPropagation(); fly(); }
+    intro.addEventListener('click', fly);
+    document.addEventListener('keydown', onKey, true);
+    if (reduced) { intro.classList.add('done'); holdTimer = setTimeout(fly, 400); }
+    else holdTimer = setTimeout(fly, INTRO_HOLD_MS);
+  })();
+})();
+</script>
+
+</body></html>

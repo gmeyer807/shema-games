@@ -1,0 +1,1081 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Squirrel Run</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  /* Layout (landscape first): top bar · the night street (canvas) · a thumb panel under it with the noise meter.
+     The whole street and panel are the jump button. Colours = Shema app tokens; the street itself is always night. */
+  :root {
+    --bg-0: #eef1ec; --bg-1: #fbfcfa; --bg-2: #f3f5f1; --bg-3: #e4e9e2;
+    --line: #d5dcd3; --line-bright: #b9c3b8;
+    --amber: #b86b00; --amber-hi: #9a5900; --amber-glow: rgba(184, 107, 0, 0.14);
+    --green: #1d8a4b; --red: #cc3326; --blue: #2a68b8;
+    --text-0: #151b17; --text-1: #3a453e; --text-2: #66726a; --text-3: #909a92;
+    --shadow: rgba(30, 40, 34, 0.14);
+    --page-glow-a: rgba(184, 107, 0, 0.06); --page-glow-b: rgba(42, 104, 184, 0.05); --intro-glow: rgba(184, 107, 0, 0.10);
+    --cls-alarm: #d81e34; --cls-dog: #a87b00; --cls-engine: #e05a00; --cls-music: #7a3ff2;
+    --cls-power_tools: #00897b; --cls-voices: #c21e8f; --cls-weather: #1f5fd6; --cls-background: #87918a;
+    --sc-grass: #cfdac6; --sc-grass-2: #c6d3bc; --sc-pave: #dde3d9; --sc-road: #bcc4ba; --sc-road-line: #eef1ec;
+    --sc-house-edge: #a9b4a8; --sc-roof-a: #cdb995; --sc-roof-b: #aebfca; --sc-roof-c: #cfb3af; --sc-roof-d: #bcc6a6;
+    --sc-tree: #8fb27c; --sc-tree-2: #7aa067; --sc-jacaranda: #a68bd0; --sc-water: #b0c9dd; --sc-label: #5f6b63;
+    --sc-night: rgba(20, 30, 60, 0.28); --sc-lamp: rgba(255, 214, 140, 0.55); --sc-window: #ffd98a;
+    /* grandma's room */
+    --rm-wall: #2d3a5c; --rm-wall-2: #34446b; --rm-moon: #fff1c4; --rm-wood: #9a6a43; --rm-wood-2: #7d5333;
+    --rm-sheet: #f6f1e7; --rm-quilt: #c97b84; --rm-quilt-2: #e3a7a0; --rm-quilt-3: #8fb0c9; --rm-skin: #f2c7a5; --rm-cheek: #e88f8f;
+    --rm-hair: #f4f4f2; --rm-cap: #7a8fd1; --rm-ink: #2b2a33; --rm-z: #cfd8ff; --rm-lamp: #ffd98a; --rm-slipper: #e57aa0;
+    --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    --sans: 'Inter', system-ui, 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg-0: #0e1210; --bg-1: #151a17; --bg-2: #1b211d; --bg-3: #232a25;
+      --line: #2c342e; --line-bright: #3a453d;
+      --amber: #f5a623; --amber-hi: #ffb84d; --amber-glow: rgba(245, 166, 35, 0.15);
+      --green: #5fd88f; --red: #e8564a; --blue: #5b9bd8;
+      --text-0: #eef2ee; --text-1: #b7c2ba; --text-2: #7c887f; --text-3: #4d574f;
+      --shadow: rgba(0, 0, 0, 0.45);
+      --page-glow-a: rgba(245, 166, 35, 0.05); --page-glow-b: rgba(91, 155, 216, 0.04); --intro-glow: rgba(245, 166, 35, 0.07);
+      --cls-alarm: #ff4d5e; --cls-dog: #ffd23f; --cls-engine: #ff8c32; --cls-music: #b98cff;
+      --cls-power_tools: #2ee6d6; --cls-voices: #ff6fcf; --cls-weather: #4f8fff; --cls-background: #8c978f;
+      --sc-grass: #141d17; --sc-grass-2: #18221b; --sc-pave: #1c231e; --sc-road: #242b26; --sc-road-line: #46514a;
+      --sc-house-edge: #3a453d; --sc-roof-a: #3a3328; --sc-roof-b: #28343e; --sc-roof-c: #3a2c2b; --sc-roof-d: #2e3624;
+      --sc-tree: #22362a; --sc-tree-2: #2a4231; --sc-jacaranda: #463a62; --sc-water: #1a2a37; --sc-label: #7c887f;
+      --sc-night: rgba(0, 4, 14, 0.30); --sc-lamp: rgba(255, 200, 110, 0.30); --sc-window: #e0a94a;
+      --rm-wall: #1a2238; --rm-wall-2: #1f2944; --rm-sheet: #d9d4ca;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg-0: #0e1210; --bg-1: #151a17; --bg-2: #1b211d; --bg-3: #232a25;
+    --line: #2c342e; --line-bright: #3a453d;
+    --amber: #f5a623; --amber-hi: #ffb84d; --amber-glow: rgba(245, 166, 35, 0.15);
+    --green: #5fd88f; --red: #e8564a; --blue: #5b9bd8;
+    --text-0: #eef2ee; --text-1: #b7c2ba; --text-2: #7c887f; --text-3: #4d574f;
+    --shadow: rgba(0, 0, 0, 0.45);
+    --page-glow-a: rgba(245, 166, 35, 0.05); --page-glow-b: rgba(91, 155, 216, 0.04); --intro-glow: rgba(245, 166, 35, 0.07);
+    --cls-alarm: #ff4d5e; --cls-dog: #ffd23f; --cls-engine: #ff8c32; --cls-music: #b98cff;
+    --cls-power_tools: #2ee6d6; --cls-voices: #ff6fcf; --cls-weather: #4f8fff; --cls-background: #8c978f;
+    --sc-grass: #141d17; --sc-grass-2: #18221b; --sc-pave: #1c231e; --sc-road: #242b26; --sc-road-line: #46514a;
+    --sc-house-edge: #3a453d; --sc-roof-a: #3a3328; --sc-roof-b: #28343e; --sc-roof-c: #3a2c2b; --sc-roof-d: #2e3624;
+    --sc-tree: #22362a; --sc-tree-2: #2a4231; --sc-jacaranda: #463a62; --sc-water: #1a2a37; --sc-label: #7c887f;
+    --sc-night: rgba(0, 4, 14, 0.30); --sc-lamp: rgba(255, 200, 110, 0.30); --sc-window: #e0a94a;
+    --rm-wall: #1a2238; --rm-wall-2: #1f2944; --rm-sheet: #d9d4ca;
+    color-scheme: dark;
+  }
+
+
+  /* Squirrel Run is always a night scene, so its street colours are the same in both themes */
+  :root {
+    --rn-sky-a: #141c38; --rn-sky-b: #2b3a66; --rn-moon: #fff1c4; --rn-star: #e8ecff; --rn-far: #222c52; --rn-far-win: #4d5a8a;
+    --rn-roof: #9c5443; --rn-roof-2: #7c3d31; --rn-tin: #8d99a8; --rn-tin-2: #6c7888; --rn-wall: #3b3f5c; --rn-wall-2: #34374f; --rn-win: #ffd98a;
+    --rn-leaf: #3f6b4a; --rn-leaf-2: #9fd0a0; --rn-jac: #7a62b0; --rn-trunk: #4a3426; --rn-wire: #1a1e2e; --rn-pole: #5a4636;
+    --rn-road: #1d2236; --rn-road-line: #59607e; --rn-gwall: #4a4f6c; --rn-acorn: #b9773d; --rn-cap: #6b4426; --rn-rain: #a9c4ff;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  body {
+    margin: 0; background: var(--bg-0); color: var(--text-0); font-family: var(--sans); font-size: 14px;
+    background-image: radial-gradient(ellipse 1200px 600px at 15% -10%, var(--page-glow-a), transparent 60%),
+      radial-gradient(ellipse 800px 500px at 100% 0%, var(--page-glow-b), transparent 60%);
+    -webkit-tap-highlight-color: transparent;
+  }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  .app {
+    height: 100%; height: 100dvh; display: grid; gap: 14px;
+    grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas: "top top" "stage gma" "stage log";
+    padding-block: 12px 14px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .topbar { grid-area: top; display: flex; align-items: center; gap: 14px; min-width: 0; }
+  .shema-logo { height: 30px; width: auto; aspect-ratio: 932 / 316; flex-shrink: 0; overflow: visible; }
+  .shema-logo .sl-l { fill: var(--amber); }
+  .shema-logo .sl-lat path { fill: var(--text-0); }
+  .brand-sub { font-family: var(--mono); font-size: 9px; line-height: 1.35; letter-spacing: .12em; color: var(--text-3); padding-left: 10px; border-left: 1px solid var(--line-bright); }
+  body.intro-on .topbar .shema-logo { visibility: hidden; }
+  .game-name { font-weight: 800; font-size: 17px; letter-spacing: -.01em; white-space: nowrap; }
+  .spacer { flex: 1; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--bg-1); border-radius: 8px; padding: 7px 12px; cursor: pointer; font-family: var(--mono); font-size: 12px; color: var(--text-1); white-space: nowrap; }
+  .btn:hover { border-color: var(--line-bright); }
+  .btn[aria-pressed="true"] { border-color: var(--amber); color: var(--amber); background: var(--amber-glow); }
+  .btn svg { width: 16px; height: 16px; }
+  .mode-btn { font-family: var(--sans); font-size: 14px; font-weight: 700; color: var(--text-0); padding: 6px 12px 6px 8px; }
+  .mode-btn svg { color: var(--amber); width: 18px; height: 18px; }
+  .mode-btn .short { display: none; }
+  .btn.primary { background: var(--amber); border-color: var(--amber); color: var(--bg-1); font-family: var(--sans); font-weight: 700; font-size: 16px; padding: 12px 22px; border-radius: 10px; }
+  .btn.primary:hover { background: var(--amber-hi); }
+
+  .stage { grid-area: stage; position: relative; min-height: 0; min-width: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg-2); box-shadow: 0 4px 18px var(--shadow); }
+  canvas#scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+  .hud { position: absolute; left: 10px; right: 10px; top: 10px; display: flex; gap: 8px; align-items: center; pointer-events: none; flex-wrap: wrap; }
+  .hud .tag { background: var(--bg-1); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-family: var(--mono); font-size: 13px; color: var(--text-1); font-variant-numeric: tabular-nums; }
+  .hud .tag b { color: var(--text-0); }
+  .night-bar { flex: 1; min-width: 80px; height: 8px; border-radius: 4px; background: var(--bg-3); overflow: hidden; border: 1px solid var(--line); }
+  .night-bar > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--blue), var(--amber)); }
+  .combo { color: var(--amber) !important; font-weight: 700; }
+
+  .overlay { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--bg-0) 55%, transparent); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  .ocard { width: min(460px, 100%); background: var(--bg-1); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 40px var(--shadow); padding: 22px; display: flex; flex-direction: column; gap: 14px; max-height: 100%; overflow-y: auto; }
+  .ocard h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
+  .ocard h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
+  .ocard p { margin: 0; color: var(--text-1); line-height: 1.5; }
+  .ocard canvas { width: 100%; height: auto; aspect-ratio: 4 / 3; max-height: 38vh; object-fit: contain; border-radius: 10px; display: block; background: var(--rm-wall); }
+  .overlay.solid { background: color-mix(in srgb, var(--bg-0) 88%, transparent); }
+  .deck { gap: 16px; }
+  .slides { position: relative; min-height: 0; }
+  .slide { display: flex; flex-direction: column; gap: 10px; animation: slideIn .28s ease; }
+  .slide.back { animation-name: slideBack; }
+  .slide h1 { font-size: 26px; }
+  .slide p { font-size: 16px; }
+  .step { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--amber); }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+  @keyframes slideBack { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+  .deck-nav { display: flex; align-items: center; gap: 12px; }
+  .deck-nav .primary { margin-left: auto; }
+  .deck-nav .btn:not(.primary) { padding: 12px 16px; font-size: 14px; }
+  .dots { display: flex; gap: 7px; }
+  .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line-bright); transition: width .2s, background .2s; }
+  .dots i.on { width: 22px; border-radius: 4px; background: var(--amber); }
+  .diff { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .diff button { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; text-align: left; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--line); background: var(--bg-2); cursor: pointer; min-width: 0; }
+  .diff button b { font-size: 15px; }
+  .diff button span { font-size: 11px; color: var(--text-2); line-height: 1.3; }
+  .diff button[aria-checked="true"] { border-color: var(--amber); background: var(--amber-glow); }
+  .clockcard { aspect-ratio: 4 / 3; max-height: 38vh; border-radius: 10px; background: var(--rm-wall); display: flex; align-items: center; justify-content: center; gap: 18px; color: var(--rm-moon); font-size: clamp(30px, 9vw, 54px); font-weight: 700; }
+  .clockcard .arrow { color: var(--amber); }
+  @media (prefers-reduced-motion: reduce) { .slide { animation: none; } }
+  .rules { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .rules li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: start; color: var(--text-1); line-height: 1.45; }
+  .rules .k { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--amber); border: 1px solid var(--amber); border-radius: 50%; width: 22px; height: 22px; display: grid; place-items: center; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .stars { font-size: 28px; letter-spacing: 4px; color: var(--amber); }
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .stat { background: var(--bg-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .stat .v { font-family: var(--mono); font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .l { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-2); }
+  .best { font-family: var(--mono); font-size: 12px; color: var(--text-2); }
+
+  html, body { overflow: hidden; overscroll-behavior: none; }
+  .app { height: 100%; height: 100dvh; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "top" "stage"; gap: 10px; }
+  .stage { display: flex; flex-direction: column; background: var(--rn-sky-a); border-color: var(--line); }
+  .street { position: relative; flex: 1; min-height: 0; }
+  .street canvas#scene { cursor: pointer; }
+  .hud { top: 8px; left: 8px; right: 8px; }
+  .hud .tag { background: color-mix(in srgb, var(--bg-1) 88%, transparent); }
+  .hud .acorn { display: inline-block; width: 10px; height: 12px; border-radius: 50% 50% 45% 45%; background: var(--rn-acorn); box-shadow: inset 0 4px 0 var(--rn-cap); vertical-align: -1px; margin-right: 4px; }
+
+  /* the thumb panel */
+  .pad { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 14px; padding: 10px 14px; background: var(--bg-1); border-top: 1px solid var(--line); touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; transition: background .08s; }
+  .pad.down { background: var(--bg-2); }
+  .meter-wrap { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .mlabel { display: flex; align-items: baseline; gap: 8px; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-2); }
+  .mlabel b { font-size: 15px; letter-spacing: 0; color: var(--text-0); font-variant-numeric: tabular-nums; }
+  .mlabel .r { margin-left: auto; text-transform: none; letter-spacing: .02em; }
+  .nbar { position: relative; height: 12px; border-radius: 6px; background: var(--bg-3); }
+  .nbar .fill { position: absolute; inset: 0 auto 0 0; border-radius: 6px; background: var(--green); transition: width .08s linear; }
+  .nbar .tick { position: absolute; top: -4px; bottom: -4px; width: 3px; margin-left: -1px; border-radius: 2px; }
+  .lock { height: 5px; border-radius: 3px; background: var(--bg-3); overflow: hidden; }
+  .lock > div { height: 100%; width: 0; background: var(--red); }
+  .status { font-size: 13px; font-weight: 600; color: var(--text-1); min-height: 1.3em; }
+  .status.bad { color: var(--red); } .status.ok { color: var(--green); }
+  .jumpkey { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 92px; height: 56px; border-radius: 12px; border: 2px solid var(--amber); color: var(--amber); font-weight: 800; font-size: 15px; background: var(--amber-glow); }
+  .jumpkey small { font-family: var(--mono); font-weight: 500; font-size: 9px; letter-spacing: .08em; color: var(--text-2); }
+  .pad.down .jumpkey { background: var(--amber); color: var(--bg-1); }
+  .pad.down .jumpkey small { color: var(--bg-1); }
+  .legend { display: flex; gap: 12px; font-family: var(--mono); font-size: 10px; color: var(--text-2); }
+  .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+  .tip { font-family: var(--mono); font-size: 11px; color: var(--amber); display: none; }
+
+  .ocard canvas { aspect-ratio: 16 / 9; background: var(--rn-sky-a); }
+  .turn { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: var(--amber-glow); color: var(--text-1); font-size: 13px; line-height: 1.4; }
+  .turn svg { width: 22px; height: 22px; color: var(--amber); flex-shrink: 0; }
+  @media (hover: hover) and (pointer: fine) { .turn { display: none; } }
+
+  /* phone held upright: it still plays, with a bigger thumb panel and a nudge to turn the phone */
+  @media (orientation: portrait) {
+    .app { padding-block: 8px 10px; }
+    .brand-sub { display: none; }
+    /* the street keeps a landscape shape; everything below it is a big thumb-sized jump button */
+    .street { flex: 0 0 auto; aspect-ratio: 430 / 340; max-height: 62%; }
+    .pad { flex: 1; display: flex; flex-direction: column; padding: 12px 14px 14px; gap: 10px; }
+    .jumpkey { width: 100%; flex: 1; min-height: 72px; font-size: 20px; }
+    .tip { display: block; }
+  }
+  /* phone held sideways: slim top bar, one-line panel */
+  @media (orientation: landscape) and (max-height: 620px) {
+    .app { gap: 6px; padding-block: 6px 6px; }
+    .shema-logo { height: 22px; }
+    .brand-sub { display: none; }
+    .btn { padding: 5px 10px; }
+    .pad { padding: 6px 12px; }
+    .jumpkey { height: 44px; width: 84px; }
+    .legend { display: none; }
+    .ocard { width: min(760px, 100%); padding: 16px; gap: 10px; }
+    .slide, .ocard.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 18px; row-gap: 8px; align-items: start; }
+    .slide > canvas, .ocard.split > .art { grid-column: 1; grid-row: 1 / span 6; max-height: none; }
+    .slide > :not(canvas), .ocard.split > :not(.art) { grid-column: 2; }
+    .slide h1 { font-size: 22px; } .slide p { font-size: 14px; } .ocard h2 { font-size: 20px; }
+  }
+  @media (max-width: 520px) {
+    .btn .lbl-long, .mode-btn .full { display: none; }
+    .mode-btn .short { display: inline; }
+    .topbar { gap: 8px; }
+    .shema-logo { height: 26px; }
+  }
+  .end-art { aspect-ratio: 16 / 9; border-radius: 10px; background: linear-gradient(180deg, var(--rn-sky-a), var(--rn-sky-b)); display: grid; place-items: center; color: var(--rn-moon); font-size: clamp(40px, 9vw, 64px); font-weight: 800; font-family: var(--mono); }
+
+  /* opening sequence (same as the Shema app) */
+  .intro { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; cursor: pointer; }
+  .intro-bg { position: absolute; inset: 0; background: var(--bg-0); background-image: radial-gradient(ellipse 900px 520px at 50% 48%, var(--intro-glow), transparent 65%); transition: opacity .6s ease .15s; }
+  .intro.fly .intro-bg { opacity: 0; }
+  .intro.fly { pointer-events: none; }
+  .intro-stage { position: relative; display: flex; align-items: center; justify-content: center; }
+  .intro .shema-logo { position: relative; height: auto; width: min(78vw, 640px); transform-origin: 0 0; }
+  .intro.fly .shema-logo { transition: transform .75s cubic-bezier(.65, 0, .25, 1); }
+  .intro .sl-l { fill: transparent; stroke: var(--amber); stroke-width: 5; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1;
+    animation: slDraw 1s cubic-bezier(.6, 0, .3, 1) calc(.25s + var(--i) * .22s) forwards, slFill .45s ease calc(1s + var(--i) * .22s) forwards; }
+  .intro .sl-lat { opacity: 0; transform-box: fill-box; transform-origin: center; animation: slLat .6s cubic-bezier(.2, .9, .3, 1.15) 1.7s forwards; }
+  .intro-ring { position: absolute; left: 50%; top: 50%; width: min(52vw, 420px); aspect-ratio: 1; margin: calc(min(52vw, 420px) / -2) 0 0 calc(min(52vw, 420px) / -2);
+    border: 1.5px solid var(--amber); border-radius: 50%; opacity: 0; animation: slRing 1.8s cubic-bezier(.2, .6, .3, 1) calc(var(--r) * .35s) 2; pointer-events: none; }
+  .intro-sub { position: relative; font-family: var(--mono); font-size: clamp(10px, 1.4vw, 13px); letter-spacing: .42em; color: var(--text-2); opacity: 0; transform: translateY(6px); animation: slSub .6s ease 2.15s forwards; padding-left: .42em; }
+  .intro-skip { position: absolute; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); font-family: var(--mono); font-size: 10px; color: var(--text-3); opacity: 0; animation: slSub .4s ease .8s forwards; }
+  .intro.fly .intro-sub, .intro.fly .intro-skip, .intro.fly .intro-ring { transition: opacity .25s ease; opacity: 0 !important; animation: none; }
+  .intro.done .sl-l { animation: none; fill: var(--amber); stroke-width: 0; }
+  .intro.done .sl-lat, .intro.done .intro-sub { animation: none; opacity: 1; transform: none; }
+  @keyframes slDraw { to { stroke-dashoffset: 0; } }
+  @keyframes slFill { to { fill: var(--amber); stroke-width: 0; } }
+  @keyframes slLat { from { opacity: 0; transform: scale(1.35); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+  @keyframes slRing { 0% { opacity: 0; transform: scale(.25); } 15% { opacity: .45; } 100% { opacity: 0; transform: scale(1.9); } }
+  @keyframes slSub { to { opacity: 1; transform: none; } }
+</style>
+
+<div class="intro" id="intro" aria-hidden="true">
+  <div class="intro-bg"></div>
+  <div class="intro-stage">
+    <div class="intro-ring" style="--r:0"></div>
+    <div class="intro-ring" style="--r:1"></div>
+    <div class="intro-ring" style="--r:2"></div>
+  </div>
+  <div class="intro-sub">NOISE EVENT MONITOR</div>
+  <div class="intro-skip">tap to skip</div>
+</div>
+<script>document.body.classList.add('intro-on');</script>
+
+<div class="app">
+  <header class="topbar">
+    <svg class="shema-logo" viewBox="-8 -8 932 316" role="img" aria-label="SHEMA">
+      <g class="sl-heb">
+        <path class="sl-l" pathLength="1" style="--i:2" d="M32.8 298.9C15.9 297.4 9.5 294.0 7.0 285.2C5.4 279.4 5.8 273.9 9.0 254.7C13.3 228.5 16.3 220.4 23.3 216.1C28.8 212.7 37.8 212.0 77.1 212.0C97.8 212.0 116.2 211.7 117.9 211.4C120.3 210.9 121.0 210.2 121.0 208.5C121.0 202.7 100.3 180.6 66.0 149.8C33.6 120.6 10.4 92.7 2.4 73.3C-3.0 60.2 1.4 40.2 13.2 23.8C28.6 2.3 31.1 0.5 43.8 1.2C48.7 1.5 53.3 2.5 56.4 3.8C63.1 6.8 72.8 17.0 83.0 31.9C111.6 73.5 159.3 133.0 164.1 133.0C166.9 133.0 170.8 115.7 171.7 99.6L172.3 88.5L161.9 82.6C140.7 70.4 133.2 64.4 131.7 58.2C129.1 47.6 153.8 9.3 167.7 2.1C175.6 -1.9 182.2 -0.3 197.6 9.3C222.1 24.5 240.1 42.3 248.0 59.1C254.6 73.2 254.3 88.0 247.1 116.1C239.5 145.4 234.9 156.5 219.6 181.9C209.7 198.3 207.0 203.3 207.0 205.4C207.0 206.2 210.9 211.5 215.6 217.2C220.4 222.9 225.6 230.4 227.3 234.0C230.1 239.8 230.4 241.3 230.3 250.0C230.1 261.9 227.6 278.8 225.2 284.4C222.4 290.6 216.6 295.8 210.6 297.4C206.5 298.6 189.3 298.9 123.5 299.3C78.4 299.5 37.6 299.4 32.8 298.9Z" />
+        <path class="sl-l" pathLength="1" style="--i:1" d="M496.1 298.9C489.2 297.7 482.5 293.8 480.3 289.7C478.8 287.0 478.5 283.9 478.6 268.5C478.7 258.6 479.2 238.6 479.9 224.0C480.5 209.4 481.0 184.0 481.0 167.5C481.0 135.0 479.8 121.8 475.9 111.6C474.0 106.4 473.3 105.6 469.1 103.6C464.8 101.7 463.0 101.5 444.5 101.6C414.2 101.8 392.2 105.4 386.0 111.2C384.0 113.1 383.8 113.9 384.4 119.5C384.7 122.8 389.0 141.8 393.9 161.6C407.3 215.4 407.5 216.6 407.5 236.0C407.5 258.4 404.8 271.5 397.8 282.3C390.8 293.3 383.8 294.9 340.0 295.7C289.7 296.7 286.3 295.2 284.0 272.0C282.2 255.3 285.7 225.4 290.7 212.7C293.5 205.7 300.3 204.1 319.0 206.0C326.6 206.8 331.5 206.9 332.1 206.3C333.9 204.5 326.8 168.2 321.0 149.5C319.3 144.0 316.1 132.2 314.0 123.3C311.8 114.4 309.1 105.3 308.0 103.0C305.9 98.8 305.2 98.5 295.9 97.5C292.9 97.2 288.9 96.0 287.1 94.9C283.3 92.6 280.1 86.1 280.0 80.7C280.0 76.1 287.3 34.7 290.1 23.5C294.5 5.9 301.1 0.7 319.5 0.6C329.7 0.5 332.7 2.1 333.6 8.2C334.4 12.9 336.7 15.6 340.7 16.6C342.3 17.0 350.2 16.8 358.5 16.1C403.8 12.5 461.1 11.0 483.0 12.9C498.7 14.2 517.6 17.8 524.3 20.8C535.8 25.9 546.4 34.9 550.6 43.1C556.5 54.9 560.5 78.6 561.6 109.0C562.4 132.4 560.4 214.8 558.4 238.5C555.7 271.5 553.7 280.4 547.7 286.1C538.9 294.7 511.2 301.5 496.1 298.9Z" />
+        <path class="sl-l" pathLength="1" style="--i:0" d="M645.0 299.0C635.9 298.1 630.6 296.7 626.3 294.1C621.8 291.3 620.3 288.5 619.1 281.0C616.6 265.2 613.0 200.6 613.0 171.4C613.0 150.9 611.6 132.7 608.9 116.7C606.2 100.6 603.9 94.9 598.5 90.5C587.7 81.6 588.3 74.1 602.4 42.5C610.6 24.2 617.6 12.2 622.4 8.5C632.8 0.6 649.7 3.9 664.3 16.7C678.2 28.9 684.1 41.1 688.0 66.2C691.8 90.8 690.8 143.7 685.4 201.2C684.8 207.0 685.0 207.9 686.6 208.8C690.7 211.0 737.7 205.4 756.5 200.5C769.3 197.1 799.3 185.2 809.5 179.4C819.6 173.7 828.3 165.6 832.2 158.4C836.7 150.1 837.8 142.6 838.6 115.9L839.3 91.3L831.9 90.6C818.9 89.3 811.8 84.4 810.5 75.6C810.1 73.0 810.7 64.1 811.9 53.9C817.0 12.4 821.6 2.3 836.4 0.5C844.9 -0.6 865.5 4.1 875.9 9.4C883.9 13.6 900.3 25.6 905.1 30.8C908.0 33.9 911.5 39.0 912.9 42.0L915.5 47.5L915.4 75.0C915.3 109.4 914.3 117.1 904.6 157.0C889.8 217.6 882.1 237.8 869.3 249.0C859.1 258.0 810.2 275.4 765.7 286.0C740.7 291.9 703.7 297.2 675.5 299.0C658.1 300.1 656.2 300.1 645.0 299.0Z" />
+        <path class="sl-l" pathLength="1" style="--i:0" d="M722.1 173.0C707.3 171.4 706.2 171.1 703.5 167.9C701.7 165.7 701.0 163.7 701.0 160.7C701.0 156.4 708.8 132.5 717.0 111.5C720.5 102.7 721.3 99.2 721.4 93.9C721.5 85.8 720.5 84.4 710.7 79.3C699.7 73.5 695.8 67.2 698.1 58.6C699.5 53.0 716.5 22.2 721.8 15.3C727.6 8.0 732.9 5.5 743.0 5.5C753.1 5.5 757.9 7.5 769.8 16.8C785.2 28.8 792.0 37.8 796.2 51.5C799.5 62.2 799.3 78.4 795.8 91.2C788.0 119.1 770.8 154.2 759.0 166.0C753.3 171.7 748.8 173.4 738.5 173.6C733.5 173.7 726.2 173.5 722.1 173.0Z" />
+      </g>
+      <g transform="translate(201.3 92.2) scale(0.85)"><g class="sl-lat"><path d="M27.5 134.9C16.3 133.3 5.8 127.9 1.9 121.7C-2.1 115.3 1.1 94.8 6.8 89.7C8.3 88.4 9.4 88.8 17.0 93.1C26.9 98.9 31.2 100.2 38.3 99.8C42.7 99.5 43.6 99.1 45.0 96.8C47.6 92.1 45.1 89.4 32.0 82.6C17.7 75.1 9.5 67.5 6.0 58.5C4.0 53.4 3.6 50.7 3.5 40.5C3.5 29.2 3.7 28.2 6.4 22.7C10.2 15.2 18.3 7.7 26.7 3.7C33.0 0.8 34.4 0.5 46.6 0.2C66.8 -0.4 83.1 3.6 84.6 9.5C85.4 12.8 83.6 20.8 80.0 29.3C75.5 40.1 76.2 39.6 68.6 36.6C60.6 33.4 50.6 32.3 47.0 34.2C44.1 35.7 43.1 41.2 45.1 43.7C45.8 44.5 50.9 47.4 56.4 50.2C78.1 61.0 85.4 68.6 88.0 83.0C90.5 96.6 85.1 114.9 76.0 124.0C66.1 133.9 48.3 137.9 27.5 134.9ZM109.0 133.3C103.8 132.2 104.0 135.1 104.0 67.4L104.0 4.1L106.2 2.9C111.5 0.1 138.5 0.7 141.5 3.7C142.7 4.9 143.0 9.0 143.0 27.6L143.0 50.0L156.0 50.0L169.0 50.0L169.0 27.1L169.0 4.2L172.2 2.9C176.3 1.2 200.2 1.1 204.2 2.8L207.0 4.0L207.0 68.0L207.0 132.0L204.2 132.7C200.7 133.7 175.3 133.7 171.8 132.7L169.0 132.0L169.0 109.5L169.0 87.0L156.0 87.0L143.0 87.0L143.0 108.9C143.0 127.6 142.8 130.9 141.4 132.1C139.8 133.4 114.2 134.4 109.0 133.3ZM228.0 132.0C226.0 130.0 226.0 128.7 226.0 67.1C226.0 11.2 226.2 4.0 227.6 2.6C228.9 1.2 233.6 1.0 264.0 1.0L299.0 1.0L300.5 3.4C301.7 5.2 302.1 8.6 302.1 18.0C302.1 35.9 303.2 35.0 281.0 35.0L263.0 35.0L263.0 44.5L263.0 54.0L276.0 54.0C287.8 54.0 289.0 54.2 290.0 55.9C291.3 58.5 291.3 74.9 289.9 78.9L288.8 82.0L275.9 82.0L263.0 82.0L263.0 91.5L263.0 101.0L281.5 101.0C299.6 101.0 300.0 101.0 301.2 103.2C303.0 106.4 302.9 126.4 301.1 130.8L299.8 134.0L264.9 134.0C231.3 134.0 229.9 133.9 228.0 132.0ZM324.5 132.6C320.9 131.6 320.5 131.1 320.2 128.0C320.0 126.1 320.8 97.7 322.0 65.0C323.7 18.3 324.4 5.2 325.5 4.1C329.4 0.2 363.5 0.1 372.1 4.0C374.2 5.0 376.1 9.5 384.9 34.3C390.6 50.4 395.6 63.8 395.9 64.2C396.3 64.6 399.0 57.2 401.9 47.7C415.5 3.1 414.8 5.0 418.8 3.2C421.8 1.8 425.9 1.5 440.5 1.6C460.7 1.6 466.7 2.7 467.4 6.3C468.6 12.1 473.0 130.4 472.1 131.3C469.6 133.8 445.1 135.0 439.2 132.9C436.4 131.9 436.1 131.4 435.6 126.7C435.1 122.2 432.1 65.2 431.9 58.0C431.9 55.7 431.8 55.7 431.0 57.5C430.5 58.6 425.3 75.5 419.4 95.0C413.6 114.5 408.2 131.2 407.4 132.0C406.4 133.1 403.4 133.4 395.5 133.4C389.7 133.4 384.6 133.0 384.1 132.5C383.5 131.9 377.8 114.3 371.4 93.3C364.9 72.2 359.5 55.1 359.4 55.3C359.2 55.4 358.6 71.7 358.0 91.5C357.4 111.3 356.5 128.5 356.0 129.7C355.4 131.2 353.7 132.1 350.0 132.9C343.4 134.3 329.6 134.2 324.5 132.6ZM492.5 133.5C491.9 133.3 490.3 132.9 488.8 132.6C487.0 132.2 486.0 131.3 486.0 130.2C486.1 126.8 518.7 3.9 519.9 2.7C521.5 1.1 568.4 1.0 570.0 2.6C570.6 3.2 578.5 32.5 587.4 67.6C601.9 124.3 603.6 131.6 602.1 132.4C601.2 133.0 594.0 133.6 586.0 133.8C574.5 134.1 570.7 133.9 567.8 132.7C563.8 131.0 563.5 130.4 559.2 113.0L557.4 105.5L542.0 105.5L526.6 105.5L523.9 117.3C522.4 123.8 520.7 129.7 520.1 130.4C518.3 132.6 510.8 134.0 501.8 133.9C497.2 133.9 493.1 133.7 492.5 133.5ZM551.0 79.4C551.0 78.6 549.4 70.6 547.5 61.7C542.6 38.8 543.0 40.3 542.0 42.0C541.1 43.6 532.0 78.2 532.0 80.0C532.0 80.6 535.6 81.0 541.5 81.0C549.5 81.0 551.0 80.7 551.0 79.4Z" /></g></g>
+    </svg>
+    <div class="brand-sub">NOISE EVENT<br>MONITOR</div>
+    <div class="spacer"></div>
+    <button class="btn mode-btn" id="btnMode" type="button" title="Switch game" aria-label="Squirrel Run. Switch game">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-4-4"/><path d="M20 16H6l4 4"/></svg>
+      <span class="full">Squirrel Run</span><span class="short">Squirrel</span>
+    </button>
+    <button class="btn" id="btnSound" aria-pressed="false" title="Sound">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWaves" d="M23 9l-6 6M17 9l6 6"/></svg>
+      <span id="sndLabel" class="lbl-long">Sound off</span>
+    </button>
+  </header>
+
+  <main class="stage" id="stage">
+    <div class="street">
+      <canvas id="scene" aria-label="A squirrel running across night rooftops while Shema listens. Tap or press space to jump."></canvas>
+      <div class="hud" aria-live="off">
+        <span class="tag"><b id="hudDist">0 m</b></span>
+        <span class="tag"><span class="acorn" aria-hidden="true"></span><b id="hudAcorns">0</b></span>
+      </div>
+    </div>
+    <div class="pad" id="pad" role="button" aria-label="Jump">
+      <div class="meter-wrap">
+        <div class="mlabel">What Shema hears <b id="nVal">30</b> dB(A)<span class="r status" id="status">Tap Start to run</span></div>
+        <div class="nbar"><div class="fill" id="nFill"></div><div class="tick" id="nAmb" style="background: var(--text-2)"></div><div class="tick" id="nThr" style="background: var(--red)"></div></div>
+        <div class="lock" title="Shema locking on"><div id="lockFill"></div></div>
+        <div class="legend"><span><i style="background: var(--text-2)"></i>ambient</span><span><i style="background: var(--red)"></i>Shema catches above this</span><span><i style="background: var(--red); height: 4px"></i>lock-on</span></div>
+        <div class="tip">Tip: turn your phone sideways to see further ahead.</div>
+      </div>
+      <div class="jumpkey" aria-hidden="true">Jump<small>tap · hold</small></div>
+    </div>
+
+    <div class="overlay solid" id="startCard">
+      <div class="ocard deck" id="deck" aria-roledescription="carousel">
+        <div class="slides">
+          <section class="slide" aria-label="1 of 3">
+            <canvas width="640" height="360" aria-hidden="true"></canvas>
+            <div class="step">1 / 3</div>
+            <h1>Run the rooftops</h1>
+            <p>Your squirrel runs on its own across roofs, trees and power lines. Tap to jump, hold for a higher jump, and tap again in the air for a second hop. Fall between the roofs and the run is over.</p>
+            <div class="turn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="11" rx="2"/><path d="M8 3.5a9 9 0 0 1 9 1.5l-1.5 1.5"/></svg>Best played with your phone turned sideways.</div>
+          </section>
+          <section class="slide" aria-label="2 of 3" hidden>
+            <canvas width="640" height="360" aria-hidden="true"></canvas>
+            <div class="step">2 / 3</div>
+            <h1>Shema is listening</h1>
+            <p>Every landing makes noise. Tin roofs, big drops and bumping into a cat or a hadeda are loud. Go over the red line and Shema's beam swings to you while a red ring fills. If the ring closes, you're caught.</p>
+          </section>
+          <section class="slide" aria-label="3 of 3" hidden>
+            <canvas width="640" height="360" aria-hidden="true"></canvas>
+            <div class="step">3 / 3</div>
+            <h1>Hide in the noise</h1>
+            <p>Leafy trees muffle your paws and hide you from the beam. Rain and passing taxis raise the street's own noise, so you can be louder. Grab acorns for points and the paw badge for 6 quiet seconds.</p>
+            <div class="best" id="bestStart"></div>
+          </section>
+        </div>
+        <div class="deck-nav">
+          <button class="btn" id="btnBack" type="button">Back</button>
+          <div class="dots" id="dots"><i></i><i></i><i></i></div>
+          <button class="btn primary" id="btnNext" type="button">Next</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="endCard" hidden>
+      <div class="ocard split">
+        <div class="art end-art" id="endArt" aria-hidden="true">0 m</div>
+        <h2 id="endTitle">Shema caught you</h2>
+        <p id="endText"></p>
+        <div class="stats">
+          <div class="stat"><div class="v" id="stScore">0</div><div class="l">score</div></div>
+          <div class="stat"><div class="v" id="stAcorns">0</div><div class="l">acorns</div></div>
+          <div class="stat"><div class="v" id="stLoud">0</div><div class="l">loudest dB(A)</div></div>
+        </div>
+        <div class="row"><button class="btn primary" id="btnAgain" type="button">Run again</button><button class="btn" id="btnHow" type="button">How to play</button><span class="best" id="bestTxt"></span></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  // Opened inside the Shema games app (index.html) the page skips its own intro and shares the app's sound.
+  const EMBED = new URLSearchParams(location.search).has('embed');
+  const SHELL = (() => { try { return EMBED && window.parent !== window && window.parent.ShemaShell ? window.parent.ShemaShell : null; } catch (e) { return null; } })();
+  const soundPref = () => { try { return localStorage.getItem('shema.sound') !== '0'; } catch (e) { return true; } };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const $ = id => document.getElementById(id);
+
+  // ================= rules (world units; the street is 360 units tall, 40 units = 1 m) =================
+  const H = 360;                 // ground (road) at the bottom of the world
+  const MINW = 430;
+  const VIEW_TOP = 100;          // nothing to land on above this height, so the view may cut it off              // always show at least this much street sideways, so there is time to react on a phone
+  const GRAV = 2300, JUMP = 760, AIRJUMP = 620, HOLD_G = 0.5, HOLD_MAX = 0.24;
+  const COYOTE = 0.09, BUFFER = 0.13;
+  const HALF = 13;               // half the squirrel's width for collisions
+  const speedAt = t => 230 + 160 * clamp(t / 150, 0, 1);     // 230 → 390 units/s over 2½ minutes
+  const AMBIENT = 40;            // quiet night street, dB(A)
+  const CATCH = 7;               // Shema records anything louder than the ambient + 7 dB, like the real device
+  // surfaces: how loud running and landing on them is, as heard by Shema
+  const SURF = {
+    roof: { name: 'tile roof', run: 37, land: 42 },
+    tin:  { name: 'tin roof',  run: 43, land: 50 },
+    tree: { name: 'tree',      run: 28, land: 28 },
+    wire: { name: 'power line', run: 32, land: 35 },
+  };
+  const QUIET_S = 6;
+
+  // ================= one run = one world =================
+  function newWorld(opts = {}) {
+    const w = {
+      t: 0, plats: [], items: [], birds: [], events: [], genX: 0, lastY: 250,
+      p: { x: 120, y: 250, vy: 0, ground: null, air: 0, airJumps: 1, holding: false, holdT: 0, buffer: 0, blocked: false, run: 0 },
+      noise: 30, lock: 0, aim: 90, heard: false, hidden: false, rain: 0, taxi: null, quiet: 0,
+      acorns: 0, loudest: 0, over: null, nextRain: rnd(26, 38), nextTaxi: rnd(14, 22), nextBird: rnd(9, 14),
+      pops: [], demo: opts.demo || null, seed: opts.seed || 0,
+    };
+    if (opts.layout) { for (const q of opts.layout) addPlat(w, q.kind, q.x, q.w, q.y); w.genX = Infinity; }
+    else {
+      addPlat(w, 'roof', -200, 760, 250);   // a long, safe first roof
+      w.genX = 560; w.lastY = 250;
+    }
+    w.p.y = w.plats[0].y; w.p.ground = w.plats[0];
+    return w;
+  }
+  function addPlat(w, kind, x, width, y) {
+    const pl = { kind, x, w: width, y, id: w.plats.length, hue: Math.floor(Math.random() * 4), win: Math.random() };
+    w.plats.push(pl); return pl;
+  }
+  // seconds in the air for a plain jump that lands dh units higher (negative = lower)
+  function airtime(dh) { const d = JUMP * JUMP - 2 * GRAV * dh; return d < 0 ? 0 : (JUMP + Math.sqrt(d)) / GRAV; }
+
+  // FAIRNESS: every gap is at most ~70 % of what a plain jump (no hold, no second hop) covers at today's speed,
+  // a step up is never higher than a plain jump can reach, and nothing hostile sits right at an edge.
+  function generate(w, untilX) {
+    while (w.genX < untilX) {
+      const prog = clamp(w.t / 150, 0, 1);
+      const S = speedAt(w.t);
+      const r = Math.random();
+      const kind = r < 0.42 ? 'roof' : r < 0.62 ? 'tin' : r < 0.84 ? 'tree' : 'wire';
+      let y = clamp(w.lastY + rnd(-65, 75), kind === 'tree' ? 195 : 205, kind === 'tree' ? 285 : 305);   // low enough that a jump stays on screen
+      const dh = w.lastY - y;
+      const reach = S * airtime(dh);
+      const maxGap = Math.max(70, reach * (0.5 + 0.2 * prog) - 2 * HALF);
+      const gap = rnd(Math.min(60, maxGap * 0.6), maxGap);
+      const width = kind === 'roof' ? rnd(240, 520) : kind === 'tin' ? rnd(220, 380) : kind === 'tree' ? rnd(150, 240) : rnd(200, 320);
+      const x = w.genX + gap;
+      const pl = addPlat(w, kind, x, width, y);
+      // acorns: a little arc over the gap, or a row along the platform
+      if (Math.random() < 0.55) {
+        if (Math.random() < 0.5 && gap > 80) for (let i = 0; i < 3; i++) { const f = (i + 1) / 4; w.items.push({ type: 'acorn', x: x - gap + gap * f, y: Math.min(w.lastY, y) - 40 - Math.sin(f * Math.PI) * 50 }); }
+        else { const n = Math.floor(width / 70); for (let i = 0; i < n; i++) w.items.push({ type: 'acorn', x: x + 35 + i * 70, y: y - 26 }); }
+      }
+      if (Math.random() < 0.09) w.items.push({ type: 'paws', x: x + width * 0.5, y: y - 44 });
+      // a cat sits on longer roofs, never near either edge, so there is always room to jump it
+      if ((kind === 'roof' || kind === 'tin') && width > 300 && w.t > 6 && Math.random() < 0.25 + 0.3 * prog)
+        w.items.push({ type: 'cat', x: x + width * rnd(0.45, 0.65), y });
+      w.genX = x + width; w.lastY = y;
+    }
+  }
+
+  // ================= input =================
+  function press(w) {
+    const p = w.p; if (w.over) return;
+    if (p.ground || p.air < COYOTE) jump(w, JUMP);
+    else if (p.airJumps > 0) { p.airJumps = 0; jump(w, AIRJUMP); }
+    else p.buffer = BUFFER;
+  }
+  function release(w) { w.p.holding = false; }
+  function jump(w, v) {
+    const p = w.p;
+    p.vy = -v; p.ground = null; p.air = COYOTE; p.holding = true; p.holdT = 0; p.buffer = 0;
+    if (!w.demo) sfx.jump();
+  }
+
+  // ================= simulation =================
+  function noiseEvent(w, L, x, y, label) {
+    if (w.quiet > 0) L -= 15;
+    w.noise = Math.max(w.noise, L);
+    const thr = threshold(w);
+    if (L > thr - 3) w.pops.push({ x, y, t0: performance.now(), text: `${Math.round(L)} dB`, hot: L > thr && !w.hidden });
+    if (!w.demo) w.loudest = Math.max(w.loudest, L);
+    return L;
+  }
+  function ambient(w) {
+    let a = AMBIENT;
+    a += 14 * clamp(w.rain, 0, 1);
+    if (w.taxi) a += 14 * clamp(1 - Math.abs(w.taxi.x - (w.p.x + 140)) / 520, 0, 1);
+    return a;
+  }
+  const threshold = w => ambient(w) + CATCH;
+
+  function step(w, dt, camW) {
+    if (w.over) { stepFx(w, dt); return; }
+    const p = w.p;
+    w.t += dt;
+    const S = w.demo ? w.demo.speed : speedAt(w.t);
+    if (!w.demo) generate(w, p.x + camW + 300);
+    // drop what is far behind
+    if (w.plats.length > 40) w.plats = w.plats.filter(q => q.x + q.w > p.x - 600);
+    w.items = w.items.filter(it => !it.gone && it.x > p.x - 600);
+
+    // ---- move the squirrel (two sub-steps for clean landings) ----
+    for (let k = 0; k < 2; k++) {
+      const h = dt / 2;
+      if (!p.blocked) p.x += S * h;
+      if (p.ground) {
+        const g = p.ground;
+        if (p.x - HALF > g.x + g.w) { p.ground = null; p.air = 0; }   // ran off the edge
+        else { p.y = g.y; p.vy = 0; }
+      }
+      if (!p.ground) {
+        p.air += h;
+        const holdBoost = p.holding && p.vy < 0 && p.holdT < HOLD_MAX;
+        if (holdBoost) p.holdT += h;
+        const prevY = p.y;
+        p.vy += GRAV * (holdBoost ? HOLD_G : 1) * h;
+        p.y += p.vy * h;
+        // land on anything whose top we crossed while falling
+        if (p.vy > 0) {
+          for (const q of w.plats) {
+            if (p.x + HALF > q.x && p.x - HALF < q.x + q.w && prevY <= q.y + 0.5 && p.y >= q.y) {
+              land(w, q); break;
+            }
+          }
+        }
+        // ran into the side of a building: stuck against the wall, sliding down
+        if (!p.ground) {
+          for (const q of w.plats) {
+            if ((q.kind === 'roof' || q.kind === 'tin') && p.y > q.y + 8 && p.x + HALF > q.x && p.x + HALF < q.x + 30) { p.x = q.x - HALF; p.blocked = true; }
+          }
+        }
+      }
+    }
+    if (p.ground) { p.run += dt; p.airJumps = 1; }
+    if (p.buffer > 0) { p.buffer -= dt; }
+    if (p.y > H + 60) { end(w, 'fell'); return; }
+
+    // ---- pickups and hazards ----
+    for (const it of w.items) {
+      if (it.gone) continue;
+      if (it.type === 'acorn' && Math.abs(it.x - p.x) < 24 && Math.abs(it.y - (p.y - 16)) < 28) { it.gone = true; w.acorns++; if (!w.demo) sfx.acorn(); }
+      if (it.type === 'paws' && Math.abs(it.x - p.x) < 26 && Math.abs(it.y - (p.y - 16)) < 34) { it.gone = true; w.quiet = QUIET_S; if (!w.demo) sfx.paws(); }
+      if (it.type === 'cat' && !it.hit && Math.abs(it.x - p.x) < 26 && p.y > it.y - 30) {
+        it.hit = true; it.flee = 0;
+        noiseEvent(w, 66, p.x, p.y - 40, 'cat');
+        if (!w.demo) sfx.cat();
+      }
+    }
+    // hadedas fly in low from the right; a red "!" warns a second before
+    if (!w.demo) {
+      w.nextBird -= dt;
+      if (w.nextBird <= 0) {
+        const y = rnd(120, 230);
+        w.birds.push({ x: p.x + camW + 160, y, y0: y, warn: 1.1, t: 0 });
+        w.nextBird = rnd(8, 14) * (1 - 0.35 * clamp(w.t / 150, 0, 1));
+      }
+    }
+    for (const b of w.birds) {
+      b.t += dt;
+      if (b.warn > 0) { b.warn -= dt; b.x = p.x + camW + 160; continue; }
+      b.x -= 170 * dt; b.y = b.y0 + Math.sin(b.t * 3) * 14;
+      if (!b.hit && Math.abs(b.x - p.x) < 28 && Math.abs(b.y - (p.y - 16)) < 26) { b.hit = true; noiseEvent(w, 66, p.x, p.y - 40, 'hadeda'); if (!w.demo) sfx.squawk(); }
+    }
+    w.birds = w.birds.filter(b => b.x > p.x - 400);
+
+    // ---- weather and traffic that mask you ----
+    if (!w.demo || w.demo.rain) {
+      if (!w.demo) { w.nextRain -= dt; if (w.nextRain <= 0 && w.rainT == null) { w.rainT = 8; w.nextRain = rnd(30, 44); } }
+      if (w.rainT != null) { w.rainT -= dt; w.rain = Math.min(1, w.rain + dt); if (w.rainT <= 0) w.rainT = null; }
+      else w.rain = Math.max(0, w.rain - dt * 0.6);
+      if (w.demo && w.demo.rain) { w.rain = 1; }
+    }
+    if (!w.demo) {
+      w.nextTaxi -= dt;
+      if (w.nextTaxi <= 0 && !w.taxi) { w.taxi = { x: p.x - 600, hooted: false }; w.nextTaxi = rnd(16, 26); }
+      if (w.taxi) {
+        w.taxi.x += (S + 260) * dt;
+        if (!w.taxi.hooted && w.taxi.x > p.x - 100) { w.taxi.hooted = true; sfx.taxi(); }
+        if (w.taxi.x > p.x + camW + 400) w.taxi = null;
+      }
+    }
+    w.quiet = Math.max(0, w.quiet - dt);
+
+    // ---- what Shema hears ----
+    const surf = p.ground ? SURF[p.ground.kind] : null;
+    const base = (surf ? surf.run : 26) - (w.quiet > 0 ? 15 : 0);
+    w.noise = Math.max(base, w.noise - 18 * dt);
+    w.hidden = !!(p.ground && p.ground.kind === 'tree') || inCanopy(w);
+    const thr = threshold(w);
+    w.heard = w.noise > thr && !w.hidden;
+    // the beam swings to your bearing first, then locks on; it lets go when you are quiet or hidden
+    const dev = shemaPos(w, camW);
+    const bearing = clamp(Math.atan2(dev.y - (p.y - 14), p.x - dev.x) * 180 / Math.PI, 5, 175);
+    const sweep = 90 + Math.sin(w.t * 0.7) * 55;
+    const want = w.heard ? bearing : (w.lock > 0.05 ? bearing : sweep);
+    w.aim += clamp(want - w.aim, -150 * dt, 150 * dt);
+    const aligned = Math.abs(bearing - w.aim) < 6;
+    if (w.heard && aligned) w.lock += dt / 1.6;
+    else w.lock -= dt * (w.hidden ? 1.3 : 0.5);
+    w.lock = clamp(w.lock, 0, 1);
+    if (w.lock >= 1 && !w.demo) { end(w, 'caught'); return; }
+    if (w.demo && w.lock >= 0.95) w.lock = 0.95;
+    stepFx(w, dt);
+  }
+  function stepFx(w, dt) { }
+  function land(w, q) {
+    const p = w.p;
+    const impact = p.vy;
+    p.y = q.y; p.vy = 0; p.ground = q; p.air = 0; p.blocked = false; p.run = 0;
+    const L = SURF[q.kind].land + impact / 80;
+    noiseEvent(w, L, p.x, p.y - 34);
+    if (!w.demo) sfx.land(L, q.kind);
+    if (p.buffer > 0) { p.buffer = 0; jump(w, JUMP); }
+  }
+  function inCanopy(w) {
+    const p = w.p;
+    return w.plats.some(q => q.kind === 'tree' && p.x > q.x - 4 && p.x < q.x + q.w + 4 && p.y > q.y - 30 && p.y < q.y + 70);
+  }
+  // Shema sits on the low garden wall at the left of the screen and follows the chase along it
+  function shemaPos(w, camW) { const cam = camX(w, camW); return { x: cam + Math.min(70, camW * 0.12), y: H - 46 }; }
+  const camX = (w, camW) => w.p.x - Math.min(150, camW * 0.27);
+
+  // ================= drawing =================
+  let T = {};
+  const TOKENS = ['bg-1', 'bg-2', 'line', 'amber', 'red', 'green', 'text-0', 'text-1',
+    'rn-sky-a', 'rn-sky-b', 'rn-moon', 'rn-star', 'rn-far', 'rn-far-win', 'rn-roof', 'rn-roof-2', 'rn-tin', 'rn-tin-2', 'rn-wall', 'rn-wall-2', 'rn-win',
+    'rn-leaf', 'rn-leaf-2', 'rn-jac', 'rn-trunk', 'rn-wire', 'rn-pole', 'rn-road', 'rn-road-line', 'rn-gwall', 'rn-acorn', 'rn-cap', 'rn-rain'];
+  function readTokens() { const cs = getComputedStyle(document.documentElement); T = {}; for (const n of TOKENS) T[n] = cs.getPropertyValue('--' + n).trim(); }
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readTokens);
+  new MutationObserver(readTokens).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  const SPR = {};
+  for (const [k, v] of Object.entries({ run: 'assets/squirrel_run.webp', jump: 'assets/squirrel_jump.webp', squirrel: 'assets/squirrel.webp', cat: 'assets/cat.webp', hadeda: 'assets/hadeda.webp', taxi: 'assets/taxi.webp', owl: 'assets/owl.webp' })) {
+    const im = new Image(); im.onload = () => { SPR[k] = { img: im, frames: 6 }; }; im.src = v;
+  }
+  function sprite(c, k, frame, x, y, size, flip) {
+    const s = SPR[k]; if (!s) return false;
+    const fw = s.img.width / s.frames, hh = size * s.img.height / fw;
+    c.save(); c.translate(x, y); if (flip) c.scale(-1, 1);
+    c.drawImage(s.img, (frame % s.frames) * fw, 0, fw, s.img.height, -size / 2, -hh, size, hh);
+    c.restore(); return true;
+  }
+  const hash = n => { const s = Math.sin(n * 127.1) * 43758.5453; return s - Math.floor(s); };
+  function rr(c, x, y, w, h, r) { c.beginPath(); if (c.roundRect) c.roundRect(x, y, w, h, r); else c.rect(x, y, w, h); }
+  const FONT = "Inter, system-ui, sans-serif", MONO = '"JetBrains Mono", ui-monospace, monospace';
+
+  // view: { c, K, ox, oy, cw, ch, VW } — screen = ox + (x - cam) * K, oy + y * K
+  function drawWorld(v, w, now) {
+    const c = v.c, K = v.K, cam = camX(w, v.VW);
+    const X = x => (x - cam) * K + v.ox, Y = y => v.oy + y * K;
+    c.save();
+    // sky
+    const g = c.createLinearGradient(0, 0, 0, v.ch); g.addColorStop(0, T['rn-sky-a']); g.addColorStop(1, T['rn-sky-b']);
+    c.fillStyle = g; c.fillRect(0, 0, v.cw, v.ch);
+    // stars + moon (fixed)
+    c.fillStyle = T['rn-star'];
+    for (let i = 0; i < 40; i++) { const sx = hash(i) * v.cw, sy = hash(i + 50) * (Y(150)); c.globalAlpha = 0.3 + 0.5 * hash(i + 9); c.fillRect(sx, sy, 2, 2); }
+    c.globalAlpha = 1;
+    const mx = v.cw * 0.78, my = Math.max(28 * K, Y(40)), mr = 22 * K;
+    c.fillStyle = T['rn-moon']; c.beginPath(); c.arc(mx, my, mr, 0, Math.PI * 2); c.fill();
+    c.fillStyle = T['rn-sky-a']; c.globalAlpha = 0.9; c.beginPath(); c.arc(mx + mr * 0.45, my - mr * 0.25, mr * 0.9, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
+    // far skyline (slow parallax)
+    const par = 0.25, step = 70;
+    const f0 = Math.floor(cam * par / step) - 1;
+    for (let i = f0; i < f0 + v.VW / step + 3; i++) {
+      const bx = (i * step - cam * par) * K + v.ox, bh = 60 + hash(i) * 90, bw = step * (0.7 + hash(i + 3) * 0.3) * K;
+      c.fillStyle = T['rn-far']; c.fillRect(bx, Y(H - 30 - bh), bw, (bh + 30) * K);
+      c.fillStyle = T['rn-far-win'];
+      for (let r = 0; r < 4; r++) if (hash(i * 7 + r) > 0.55) c.fillRect(bx + bw * 0.3, Y(H - 30 - bh + 18 + r * 22), 5 * K, 7 * K);
+    }
+    // road + taxi
+    c.fillStyle = T['rn-road']; c.fillRect(0, Y(H - 22), v.cw, v.ch - Y(H - 22));
+    c.strokeStyle = T['rn-road-line']; c.lineWidth = 2 * K; c.setLineDash([16 * K, 14 * K]); c.lineDashOffset = cam * K;
+    c.beginPath(); c.moveTo(0, Y(H - 10)); c.lineTo(v.cw, Y(H - 10)); c.stroke(); c.setLineDash([]);
+    if (w.taxi) sprite(c, 'taxi', Math.floor(now / 90), X(w.taxi.x), Y(H - 4), 64 * K, false) || (c.font = `${30 * K}px sans-serif`, c.fillText('🚐', X(w.taxi.x), Y(H - 6)));
+    // platforms
+    for (const q of w.plats) {
+      const x0 = X(q.x), x1 = X(q.x + q.w);
+      if (x1 < -40 || x0 > v.cw + 40) continue;
+      if (q.kind === 'roof' || q.kind === 'tin') {
+        c.fillStyle = q.hue % 2 ? T['rn-wall'] : T['rn-wall-2']; c.fillRect(x0 + 6 * K, Y(q.y + 10), x1 - x0 - 12 * K, Y(H - 22) - Y(q.y + 10));
+        // lit windows
+        c.fillStyle = T['rn-win'];
+        for (let r = 0; r < 3 && q.y + 62 + r * 48 < H - 42; r++) for (let k = 0; k < Math.floor(q.w / 80); k++) if (hash(q.id * 31 + r * 7 + k) > 0.6) c.fillRect(x0 + (30 + k * 80) * K, Y(q.y + 40 + r * 48), 18 * K, 22 * K);
+        if (q.kind === 'roof') {
+          c.fillStyle = T['rn-roof']; rr(c, x0, Y(q.y), x1 - x0, 14 * K, 3 * K); c.fill();
+          c.fillStyle = T['rn-roof-2']; for (let tx = x0 + 6 * K; tx < x1 - 4 * K; tx += 14 * K) c.fillRect(tx, Y(q.y + 4), 2 * K, 8 * K);
+        } else {
+          c.fillStyle = T['rn-tin']; c.fillRect(x0, Y(q.y), x1 - x0, 10 * K);
+          c.fillStyle = T['rn-tin-2']; for (let tx = x0 + 3 * K; tx < x1; tx += 8 * K) c.fillRect(tx, Y(q.y), 3 * K, 10 * K);
+        }
+      } else if (q.kind === 'tree') {
+        const cx = (x0 + x1) / 2;
+        c.fillStyle = T['rn-trunk']; c.fillRect(cx - 9 * K, Y(q.y + 20), 18 * K, Y(H - 22) - Y(q.y + 20));
+        c.fillRect(x0 + 8 * K, Y(q.y + 30), x1 - x0 - 16 * K, 7 * K);
+      } else if (q.kind === 'wire') {
+        c.fillStyle = T['rn-pole'];
+        c.fillRect(x0 - 3 * K, Y(q.y - 18), 6 * K, Y(H - 22) - Y(q.y - 18)); c.fillRect(x1 - 3 * K, Y(q.y - 18), 6 * K, Y(H - 22) - Y(q.y - 18));
+        c.fillRect(x0 - 12 * K, Y(q.y - 16), 24 * K, 4 * K); c.fillRect(x1 - 12 * K, Y(q.y - 16), 24 * K, 4 * K);
+        c.strokeStyle = T['rn-wire']; c.lineWidth = 2.5 * K;
+        c.beginPath(); c.moveTo(x0, Y(q.y)); c.quadraticCurveTo((x0 + x1) / 2, Y(q.y + 6), x1, Y(q.y)); c.stroke();
+        c.globalAlpha = 0.5; c.beginPath(); c.moveTo(x0, Y(q.y - 12)); c.quadraticCurveTo((x0 + x1) / 2, Y(q.y - 4), x1, Y(q.y - 12)); c.stroke(); c.globalAlpha = 1;
+      }
+    }
+    // garden wall along the bottom with Shema on it
+    c.fillStyle = T['rn-gwall']; c.fillRect(0, Y(H - 40), v.cw, 18 * K);
+    // items
+    for (const it of w.items) {
+      if (it.gone) continue;
+      const x = X(it.x), y = Y(it.y); if (x < -40 || x > v.cw + 40) continue;
+      if (it.type === 'acorn') {
+        const bob = Math.sin(now / 300 + it.x) * 2 * K;
+        c.fillStyle = T['rn-acorn']; c.beginPath(); c.ellipse(x, y + 3 * K + bob, 6 * K, 7.5 * K, 0, 0, Math.PI * 2); c.fill();
+        c.fillStyle = T['rn-cap']; c.beginPath(); c.ellipse(x, y - 3 * K + bob, 7.5 * K, 4 * K, 0, Math.PI, 0); c.fill(); c.fillRect(x - 1 * K, y - 9 * K + bob, 2 * K, 4 * K);
+      } else if (it.type === 'paws') {
+        const pul = 1 + Math.sin(now / 200) * 0.08;
+        c.fillStyle = T['amber']; c.globalAlpha = 0.25; c.beginPath(); c.arc(x, y, 18 * K * pul, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
+        c.fillStyle = T['bg-1']; c.beginPath(); c.arc(x, y, 13 * K, 0, Math.PI * 2); c.fill();
+        c.strokeStyle = T['amber']; c.lineWidth = 2.5 * K; c.stroke();
+        c.fillStyle = T['amber']; c.beginPath(); c.ellipse(x, y + 3 * K, 5 * K, 4 * K, 0, 0, Math.PI * 2); c.fill();
+        for (const [dx, dy] of [[-6, -4], [-2, -8], [2, -8], [6, -4]]) { c.beginPath(); c.arc(x + dx * K, y + dy * K, 2 * K, 0, Math.PI * 2); c.fill(); }
+      } else if (it.type === 'cat') {
+        if (it.hit) { it.flee = (it.flee || 0) + 1 / 60; if (it.flee > 1.2) it.gone = true; }
+        const dx = it.hit ? -it.flee * 160 : 0, dy = it.hit ? -Math.sin(Math.min(1, it.flee) * Math.PI) * 50 : 0;
+        if (!sprite(c, 'cat', Math.floor(now / 140), X(it.x + dx), Y(it.y + dy), 46 * K, true)) { c.font = `${30 * K}px sans-serif`; c.textAlign = 'center'; c.fillText('🐈', X(it.x + dx), Y(it.y - 4)); }
+      }
+    }
+    // squirrel
+    const p = w.p;
+    const px = X(p.x), py = Y(p.y);
+    const dedicated = SPR.run && SPR.jump;
+    // with the run and jump strips: gallop on the ground, and pick the jump frame from how fast it rises or falls
+    const jf = p.vy < -450 ? 1 : p.vy < -120 ? 2 : p.vy < 220 ? 3 : 4;   // take-off, rising, top, falling (5 = landing squash)
+    const fr = p.ground ? (p.run < 0.08 && dedicated ? 5 : Math.floor(now / 70)) : (dedicated ? jf : 2);
+    c.save(); c.translate(px, py); if (!dedicated) c.rotate(p.ground ? 0 : clamp(p.vy / 2400, -0.35, 0.45));
+    if (w.quiet > 0) { c.fillStyle = T['amber']; c.globalAlpha = 0.18 + 0.1 * Math.sin(now / 120); c.beginPath(); c.arc(0, -18 * K, 30 * K, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1; }
+    const key = dedicated ? (p.ground && p.run >= 0.08 ? 'run' : 'jump') : 'squirrel';
+    if (!sprite(c, key, fr, 0, 4 * K, 52 * K, false)) { c.font = `${34 * K}px sans-serif`; c.textAlign = 'center'; c.fillText('🐿️', 0, 0); }
+    c.restore();
+    // tree canopies are drawn in front, so the squirrel can hide in them
+    for (const q of w.plats) {
+      if (q.kind !== 'tree') continue;
+      const x0 = X(q.x), x1 = X(q.x + q.w); if (x1 < -60 || x0 > v.cw + 60) continue;
+      // a band of leafy blobs along the branch: its top is where the squirrel runs
+      const leaf = q.hue % 2 ? T['rn-jac'] : T['rn-leaf'];
+      c.fillStyle = leaf; c.globalAlpha = 0.88;
+      const n = Math.max(2, Math.round(q.w / 55));
+      for (let i = 0; i <= n; i++) {
+        const bx = X(q.x + q.w * i / n), wob = hash(q.id * 13 + i);
+        c.beginPath(); c.arc(bx, Y(q.y + 26 + wob * 10), (34 + wob * 10) * K, 0, Math.PI * 2); c.fill();
+        c.beginPath(); c.arc(bx + 20 * K, Y(q.y + 52), 30 * K, 0, Math.PI * 2); c.fill();
+      }
+      c.globalAlpha = 1;
+      c.fillStyle = T['rn-leaf-2']; c.globalAlpha = 0.3;
+      for (let i = 0; i < n; i += 2) { c.beginPath(); c.arc(X(q.x + q.w * (i + 0.4) / n), Y(q.y + 18), 12 * K, 0, Math.PI * 2); c.fill(); }
+      c.globalAlpha = 1;
+    }
+    // hadedas
+    for (const b of w.birds) {
+      if (b.warn > 0) {
+        c.fillStyle = T['red']; c.font = `800 ${26 * K}px ${FONT}`; c.textAlign = 'right'; c.textBaseline = 'middle';
+        c.globalAlpha = 0.6 + 0.4 * Math.sin(now / 80); c.fillText('!', v.cw - 12 * K, Y(b.y - 16)); c.globalAlpha = 1; continue;
+      }
+      if (!sprite(c, 'hadeda', Math.floor(now / 90), X(b.x), Y(b.y + 10), 56 * K, true)) { c.font = `${30 * K}px sans-serif`; c.textAlign = 'center'; c.fillText('🐦', X(b.x), Y(b.y)); }
+    }
+    // rain
+    if (w.rain > 0.02) {
+      c.strokeStyle = T['rn-rain']; c.globalAlpha = 0.55 * w.rain; c.lineWidth = 1.3; c.beginPath();
+      for (let i = 0; i < 90; i++) { const rx = ((hash(i) * v.cw + now * 0.15) % v.cw), ry = ((hash(i + 30) * v.ch + now * (0.6 + hash(i + 7) * 0.3)) % v.ch); c.moveTo(rx, ry); c.lineTo(rx - 4, ry + 12); }
+      c.stroke(); c.globalAlpha = 1;
+    }
+    // Shema and its beam
+    const dev = shemaPos(w, v.VW), dx = X(dev.x), dy = Y(dev.y);
+    const a = w.aim * Math.PI / 180, R = Math.hypot(v.cw, v.ch);
+    const bg = c.createRadialGradient(dx, dy, 0, dx, dy, R * 0.8); bg.addColorStop(0, w.heard ? T['red'] : T['amber']); bg.addColorStop(1, 'rgba(0,0,0,0)');
+    c.globalAlpha = w.heard ? 0.38 : 0.22; c.fillStyle = bg;
+    c.beginPath(); c.moveTo(dx, dy); c.arc(dx, dy, R, -a - 0.07, -a + 0.07); c.closePath(); c.fill();
+    c.globalAlpha = 0.9; c.strokeStyle = w.heard ? T['red'] : T['amber']; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(dx, dy); c.lineTo(dx + Math.cos(a) * R, dy - Math.sin(a) * R); c.stroke(); c.globalAlpha = 1;
+    c.fillStyle = w.heard ? T['red'] : T['amber']; rr(c, dx - 11 * K, dy - 5 * K, 22 * K, 10 * K, 3 * K); c.fill();
+    c.fillStyle = T['bg-1']; for (let i = 0; i < 4; i++) { c.beginPath(); c.arc(dx - 7.5 * K + i * 5 * K, dy, 1.5 * K, 0, Math.PI * 2); c.fill(); }
+    c.fillStyle = T['rn-star']; c.font = `700 ${Math.max(9, 10 * K)}px ${MONO}`; c.textAlign = 'center'; c.textBaseline = 'top'; c.fillText('SHEMA', dx, dy + 8 * K);
+    // lock ring around the squirrel
+    if (w.lock > 0.01) {
+      c.strokeStyle = T['red']; c.lineWidth = 4 * K;
+      c.beginPath(); c.arc(px, py - 18 * K, 32 * K, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * w.lock); c.stroke();
+      c.lineWidth = 1.5 * K; c.setLineDash([4 * K, 4 * K]); c.globalAlpha = 0.7; c.beginPath(); c.arc(px, py - 18 * K, 38 * K, 0, Math.PI * 2); c.stroke(); c.setLineDash([]); c.globalAlpha = 1;
+    }
+    // dB pop-ups at landings
+    for (let i = w.pops.length - 1; i >= 0; i--) {
+      const f = w.pops[i], age = (now - f.t0) / 1000;
+      if (age > 1) { w.pops.splice(i, 1); continue; }
+      c.globalAlpha = 1 - age * age; c.font = `800 ${Math.max(11, 15 * K)}px ${MONO}`; c.textAlign = 'center'; c.textBaseline = 'middle';
+      const tx = X(f.x), ty = Y(f.y) - age * 30 * K;
+      c.lineWidth = 4; c.strokeStyle = T['rn-sky-a']; c.strokeText(f.text, tx, ty);
+      c.fillStyle = f.hot ? T['red'] : T['rn-star']; c.fillText(f.text, tx, ty); c.globalAlpha = 1;
+    }
+    c.restore();
+  }
+
+  // ================= the screen =================
+  const cv = $('scene'), ctx = cv.getContext('2d'), stage = $('stage'), view = { c: ctx, K: 1, ox: 0, oy: 0, cw: 0, ch: 0, VW: MINW };
+  function layout(v, cnv, wcss, hcss) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    cnv.width = Math.round(wcss * dpr); cnv.height = Math.round(hcss * dpr);
+    v.cw = wcss; v.ch = hcss; v.dpr = dpr;
+    v.K = Math.min(hcss / (H - VIEW_TOP), wcss / MINW, wcss / 760, 2); v.VW = wcss / v.K; v.ox = 0;   // crop the empty sky above VIEW_TOP when space is short
+    v.oy = hcss - H * v.K;     // the street sits at the bottom; extra height is sky
+  }
+  function resize() { const r = cv.getBoundingClientRect(); layout(view, cv, r.width, r.height); }
+  new ResizeObserver(resize).observe(cv);
+
+  // ================= game flow =================
+  let W = newWorld(), mode = 'start', best = 0;
+  try { best = +localStorage.getItem('shema.squirrel.best') || 0; } catch (e) { }
+  const metres = w => Math.max(0, Math.round((w.p.x - 120) / 40));
+  const score = w => metres(w) + w.acorns * 5;
+  function start() {
+    W = newWorld(); mode = 'play';
+    $('startCard').hidden = true; $('endCard').hidden = true;
+    if (sound.on) ensureAudio();
+  }
+  function end(w, why) {
+    if (w.over) return;
+    w.over = why;
+    if (w.demo) return;
+    mode = 'over';
+    if (why === 'caught') sfx.caught(); else sfx.fall();
+    const sc = score(w);
+    const isBest = sc > best;
+    if (isBest) { best = sc; try { localStorage.setItem('shema.squirrel.best', String(best)); } catch (e) { } }
+    $('endTitle').textContent = why === 'caught' ? `Shema caught you at ${metres(w)} m` : `You fell at ${metres(w)} m`;
+    $('endText').textContent = why === 'caught'
+      ? 'You were too loud for too long, and Shema locked on. Land softly, use the trees, and run when rain or a taxi covers you.'
+      : 'Missed the jump. Hold to jump higher, and tap again in the air for a second hop.';
+    $('endArt').textContent = `${metres(w)} m`;
+    $('stScore').textContent = sc; $('stAcorns').textContent = w.acorns; $('stLoud').textContent = w.loudest ? Math.round(w.loudest) : '—';
+    $('bestTxt').textContent = isBest ? 'New best!' : `Best: ${best}`;
+    setTimeout(() => { $('endCard').hidden = false; $('btnAgain').focus({ preventScroll: true }); }, why === 'caught' ? 700 : 500);
+  }
+  $('btnAgain').addEventListener('click', start);
+  $('btnHow').addEventListener('click', () => { $('endCard').hidden = true; $('startCard').hidden = false; showSlide(0, 1); });
+
+  // input: anywhere on the street or the bottom panel is the jump button
+  const pad = $('pad');
+  const down = e => { if (mode !== 'play') return; e.preventDefault(); press(W); pad.classList.add('down'); };
+  const up = () => { release(W); pad.classList.remove('down'); };
+  for (const el of [cv, pad]) { el.addEventListener('pointerdown', down); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('pointerleave', up); }
+  document.addEventListener('keydown', e => {
+    if ((e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') && mode === 'play' && !e.repeat) { e.preventDefault(); press(W); pad.classList.add('down'); }
+    if (e.code === 'Space' && mode === 'over' && !$('endCard').hidden) { e.preventDefault(); start(); }
+  });
+  document.addEventListener('keyup', e => { if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') up(); });
+
+  // ---- the panel under the street ----
+  const pct = db => clamp((db - 25) / 50 * 100, 0, 100);   // meter shows 25–75 dB(A)
+  function updatePanel() {
+    const w = W, thr = threshold(w);
+    $('hudDist').textContent = metres(w) + ' m';
+    $('hudAcorns').textContent = w.acorns;
+    const fill = $('nFill');
+    fill.style.width = pct(w.noise) + '%';
+    fill.style.background = w.heard ? 'var(--red)' : w.noise > thr - 4 ? 'var(--amber)' : 'var(--green)';
+    $('nThr').style.left = pct(thr) + '%';
+    $('nAmb').style.left = pct(ambient(w)) + '%';
+    $('nVal').textContent = Math.round(w.noise);
+    const lk = $('lockFill'); lk.style.width = (w.lock * 100) + '%';
+    let msg, cls = '';
+    if (mode !== 'play') msg = 'Tap Start to run';
+    else if (w.lock > 0.05 && w.heard) { msg = 'Shema hears you and is locking on. Get quiet!'; cls = 'bad'; }
+    else if (w.hidden) { msg = 'Hidden in the tree. Shema can’t locate you.'; cls = 'ok'; }
+    else if (w.rain > 0.5) { msg = 'Rain is masking you. Run!'; cls = 'ok'; }
+    else if (w.taxi && ambient(w) > AMBIENT + 6) { msg = 'The taxi is masking you.'; cls = 'ok'; }
+    else if (w.quiet > 0) { msg = `Quiet paws: ${Math.ceil(w.quiet)} s`; cls = 'ok'; }
+    else if (w.lock > 0.05) { msg = 'Shema lost you. Stay quiet.'; }
+    else if (w.p.ground) msg = `On a ${SURF[w.p.ground.kind].name}`;
+    else msg = 'In the air';
+    const st = $('status'); st.textContent = msg; st.className = 'r status ' + cls;
+  }
+
+  // ================= explainer cards with little live demos =================
+  let slide = 0;
+  const slides = [...document.querySelectorAll('#deck .slide')], dots = [...document.querySelectorAll('#dots i')];
+  function showSlide(i, dir) {
+    slide = clamp(i, 0, slides.length - 1);
+    slides.forEach((el, k) => { el.hidden = k !== slide; el.classList.toggle('back', dir < 0); });
+    dots.forEach((d, k) => d.classList.toggle('on', k === slide));
+    $('btnBack').style.visibility = slide === 0 ? 'hidden' : 'visible';
+    $('btnNext').textContent = slide === slides.length - 1 ? 'Start running' : 'Next';
+    $('bestStart').textContent = best ? `Your best: ${best}` : '';
+    demo = makeDemo(slide);
+  }
+  $('btnNext').addEventListener('click', () => { if (slide === slides.length - 1) start(); else showSlide(slide + 1, 1); });
+  $('btnBack').addEventListener('click', () => showSlide(slide - 1, -1));
+  let swipeX = null;
+  $('deck').addEventListener('pointerdown', e => { swipeX = e.clientX; });
+  $('deck').addEventListener('pointerup', e => { if (swipeX == null) return; const dx = e.clientX - swipeX; swipeX = null; if (Math.abs(dx) > 50) showSlide(slide + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1); });
+  document.addEventListener('keydown', e => {
+    if ($('startCard').hidden || document.body.classList.contains('intro-on')) return;
+    if (e.key === 'ArrowRight') showSlide(slide + 1, 1);
+    if (e.key === 'ArrowLeft') showSlide(slide - 1, -1);
+    if (e.key === 'Enter' && slide === slides.length - 1) { e.preventDefault(); start(); }
+  });
+  // each demo is a tiny scripted street run by the real game rules, with an autopilot that jumps at the edges
+  let demo = null;
+  function makeDemo(i) {
+    const lay = i === 0
+      ? [{ kind: 'roof', x: -300, w: 520, y: 240 }, { kind: 'roof', x: 330, w: 300, y: 210 }, { kind: 'wire', x: 740, w: 260, y: 200 }, { kind: 'roof', x: 1110, w: 600, y: 240 }]
+      : i === 1
+        ? [{ kind: 'roof', x: -300, w: 480, y: 210 }, { kind: 'tin', x: 300, w: 380, y: 270 }, { kind: 'roof', x: 790, w: 900, y: 240 }]
+        : [{ kind: 'roof', x: -300, w: 460, y: 240 }, { kind: 'tree', x: 270, w: 220, y: 200 }, { kind: 'tree', x: 600, w: 200, y: 190 }, { kind: 'roof', x: 920, w: 800, y: 230 }];
+    const w = newWorld({ layout: lay, demo: { speed: 230, rain: i === 2 ? false : false } });
+    w.p.x = -150; w.p.ground = w.plats[0]; w.p.y = w.plats[0].y;
+    if (i === 0) { w.items.push({ type: 'acorn', x: 270, y: 170 }, { type: 'acorn', x: 300, y: 160 }, { type: 'acorn', x: 680, y: 140 }); }
+    if (i === 1) w.items.push({ type: 'cat', x: 1150, y: 240 });
+    return { w, i, v: { c: null, K: 1, ox: 0, oy: 0, cw: 0, ch: 0, VW: 0 } };
+  }
+  function runDemo(d, dt, now) {
+    const cnv = slides[d.i].querySelector('canvas'); if (!cnv) return;
+    const v = d.v;
+    if (!v.c || cnv.width !== Math.round(cnv.clientWidth * (v.dpr || 1))) { v.c = cnv.getContext('2d'); layout(v, cnv, cnv.clientWidth || 400, cnv.clientHeight || 300); v.K = Math.min(v.ch / (H - 20), v.cw / 520); v.VW = v.cw / v.K; v.oy = v.ch - H * v.K; }
+    const w = d.w, p = w.p;
+    // autopilot: jump near the end of whatever it stands on, holding a little on bigger gaps
+    if (p.ground && p.x > p.ground.x + p.ground.w - 34) { press(w); w.demoHold = 0.03; }
+    if (w.demoHold != null) { w.demoHold -= dt; if (w.demoHold <= 0) { release(w); w.demoHold = null; } }
+    // card 2: a deliberately loud hop onto the tin roof, then a calm jump away
+    step(w, dt, v.VW);
+    if (w.over || p.x > (w.plats[w.plats.length - 1].x + 300)) d.w = makeDemo(d.i).w;
+    v.c.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
+    drawWorld(v, d.w, now);
+    if (d.i === 1) drawMiniMeter(v, d.w);
+  }
+  function drawMiniMeter(v, w) {
+    const c = v.c, x = 12, y = 12, wd = v.cw - 24, h = 12, thr = threshold(w);
+    c.fillStyle = T['bg-1']; c.globalAlpha = 0.9; rr(c, x - 6, y - 6, wd + 12, h + 30, 8); c.fill(); c.globalAlpha = 1;
+    c.fillStyle = T['line']; rr(c, x, y, wd, h, 6); c.fill();
+    c.fillStyle = w.heard ? T['red'] : T['green']; rr(c, x, y, wd * pct(w.noise) / 100, h, 6); c.fill();
+    c.fillStyle = T['red']; c.fillRect(x + wd * pct(thr) / 100 - 1, y - 3, 3, h + 6);
+    c.fillStyle = T['text-1']; c.font = `600 11px ${MONO}`; c.textAlign = 'left'; c.textBaseline = 'top';
+    c.fillText(`${Math.round(w.noise)} dB(A)  ·  Shema catches above ${Math.round(thr)}`, x, y + h + 5);
+  }
+
+  // ================= sound (on by default) =================
+  const sound = { on: soundPref() };
+  let ac = null, master = null, noiseBuf = null, rainNode = null;
+  const BUF = {};
+  function ensureAudio() {
+    if (!ac) {
+      let out = null;
+      const shared = SHELL && SHELL.audio();
+      if (shared) { ac = shared.ac; out = shared.out; }
+      else { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false; ac = new AC(); out = ac.destination; }
+      master = ac.createGain(); master.gain.value = sound.on ? 0.7 : 0;
+      const comp = ac.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 8;
+      master.connect(comp); comp.connect(out);
+      noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+      const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      for (const k of ['squirrel', 'cat', 'taxi', 'owl', 'alarm'])
+        fetch(`assets/${k}.mp3`).then(r => r.arrayBuffer()).then(a => ac.decodeAudioData(a)).then(b => { BUF[k] = b; }).catch(() => { });
+    }
+    if (ac.state === 'suspended') ac.resume();
+    return true;
+  }
+  const live = () => sound.on && ac && !paused;
+  function play(k, vol = 0.6, rate = 1) {
+    if (!live() || !BUF[k]) return false;
+    const s = ac.createBufferSource(), g = ac.createGain(); s.buffer = BUF[k]; s.playbackRate.value = rate; g.gain.value = vol;
+    s.connect(g); g.connect(master); s.start(); return true;
+  }
+  function tone(f, at, dur, type = 'sine', vol = 0.15, f2) {
+    if (!live()) return;
+    const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t + at);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + at + dur);
+    g.gain.setValueAtTime(0, t + at); g.gain.linearRampToValueAtTime(vol, t + at + 0.01); g.gain.exponentialRampToValueAtTime(0.0008, t + at + dur);
+    o.connect(g); g.connect(master); o.start(t + at); o.stop(t + at + dur + 0.05);
+  }
+  function thump(vol, cut) {
+    if (!live()) return;
+    const t = ac.currentTime, s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    s.buffer = noiseBuf; f.type = 'lowpass'; f.frequency.value = cut;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+    s.connect(f); f.connect(g); g.connect(master); s.start(t, Math.random()); s.stop(t + 0.2);
+  }
+  const sfx = {
+    jump() { if (Math.random() < 0.18) play('squirrel', 0.25, 1.1); else tone(520, 0, 0.08, 'triangle', 0.05, 760); },
+    land(L, kind) { const v = clamp((L - 30) / 40, 0.05, 1) * 0.5; if (kind === 'tin') { thump(v, 2600); tone(180, 0, 0.12, 'square', v * 0.2, 140); } else if (kind === 'tree') thump(v * 0.5, 700); else thump(v, 1200); },
+    acorn() { tone(880, 0, 0.07, 'triangle', 0.1); tone(1320, 0.05, 0.1, 'triangle', 0.1); },
+    paws() { [660, 880, 1100].forEach((f, i) => tone(f, i * 0.07, 0.25, 'sine', 0.1)); },
+    cat() { if (!play('cat', 0.7, 1.2)) tone(700, 0, 0.4, 'sawtooth', 0.12, 1200); },
+    squawk() { tone(560, 0, 0.18, 'sawtooth', 0.14, 380); tone(560, 0.22, 0.2, 'sawtooth', 0.14, 360); },
+    taxi() { if (!play('taxi', 0.5)) { tone(466, 0, 0.15, 'square', 0.1); tone(466, 0.22, 0.15, 'square', 0.1); } },
+    caught() { if (!play('alarm', 0.35)) { tone(520, 0, 0.25, 'square', 0.12); tone(390, 0.22, 0.4, 'square', 0.12); } },
+    fall() { tone(600, 0, 0.6, 'triangle', 0.15, 120); },
+  };
+  let nextOwl = 12, lockBeep = 0;
+  function ambientAudio(dt) {
+    if (!live()) { if (rainNode) { try { rainNode.s.stop(); } catch (e) { } rainNode = null; } return; }
+    // rain hiss follows the rain
+    if (W.rain > 0.02 && mode === 'play') {
+      if (!rainNode) {
+        const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+        s.buffer = noiseBuf; s.loop = true; f.type = 'highpass'; f.frequency.value = 900; g.gain.value = 0;
+        s.connect(f); f.connect(g); g.connect(master); s.start(); rainNode = { s, g };
+      }
+      rainNode.g.gain.setTargetAtTime(0.22 * W.rain, ac.currentTime, 0.2);
+    } else if (rainNode) { rainNode.g.gain.setTargetAtTime(0, ac.currentTime, 0.2); if (W.rain <= 0.02) { const r = rainNode; setTimeout(() => { try { r.s.stop(); } catch (e) { } }, 600); rainNode = null; } }
+    if (mode === 'play') {
+      nextOwl -= dt; if (nextOwl <= 0) { play('owl', 0.12); nextOwl = rnd(16, 26); }
+      // rising beeps while Shema locks on
+      if (W.lock > 0.15) { lockBeep -= dt; if (lockBeep <= 0) { tone(700 + W.lock * 700, 0, 0.05, 'square', 0.05); lockBeep = 0.32 - W.lock * 0.22; } }
+    }
+  }
+  const btnSound = $('btnSound');
+  function soundUi() {
+    btnSound.setAttribute('aria-pressed', String(sound.on));
+    $('sndLabel').textContent = sound.on ? 'Sound on' : 'Sound off';
+    btnSound.title = sound.on ? 'Sound on' : 'Sound off';
+    $('sndWaves').setAttribute('d', sound.on ? 'M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12' : 'M23 9l-6 6M17 9l6 6');
+  }
+  btnSound.addEventListener('click', () => {
+    sound.on = !sound.on;
+    try { localStorage.setItem('shema.sound', sound.on ? '1' : '0'); } catch (e) { }
+    if (sound.on && !ensureAudio()) sound.on = false;
+    if (master) master.gain.setTargetAtTime(sound.on ? 0.7 : 0, ac.currentTime, 0.05);
+    soundUi();
+  });
+  soundUi();
+  if (sound.on && SHELL) ensureAudio();
+  const unlock = () => { if (sound.on) ensureAudio(); };
+  window.addEventListener('pointerdown', unlock, { once: true, capture: true });
+  window.addEventListener('keydown', unlock, { once: true, capture: true });
+  document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else if (sound.on) ac.resume(); });
+  $('btnMode').addEventListener('click', () => { if (SHELL) SHELL.openPicker(); else location.href = 'index.html'; });
+  let paused = false;
+  window.__shemaPause = p => { paused = p; if (ac && master) master.gain.setTargetAtTime(p || !sound.on ? 0 : 0.7, ac.currentTime, 0.05); };
+  window.__shemaStop = () => { try { master && master.disconnect(); } catch (e) { } sound.on = false; };
+
+  // ================= loop =================
+  let last = performance.now(), lastUi = 0;
+  // behind the start card the street scrolls by on its own
+  const attract = newWorld(); attract.demo = { speed: 200 };
+  function frame(now) {
+    const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
+    if (!paused) {
+      if (mode === 'play' || mode === 'over') step(W, dt, view.VW);
+      else {
+        // idle street: autopilot run with the real generator, never ending
+        const p = attract.p;
+        if (p.ground && p.x > p.ground.x + p.ground.w - 34) { press(attract); setTimeout(() => release(attract), 120); }
+        generate(attract, p.x + view.VW + 300);
+        step(attract, dt, view.VW); attract.lock = 0;
+        if (attract.over) Object.assign(attract, newWorld(), { demo: { speed: 200 } });
+      }
+      if (!$('startCard').hidden && demo) runDemo(demo, dt, now);
+      ambientAudio(dt);
+    }
+    if (view.cw > 0 && T['rn-sky-a']) {
+      ctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
+      drawWorld(view, mode === 'start' ? attract : W, now);
+    }
+    if (now - lastUi > 80) { lastUi = now; updatePanel(); }
+    requestAnimationFrame(frame);
+  }
+  readTokens(); resize();
+  showSlide(0, 1);
+  if (location.hash === '#test') window.__r = { get W() { return W; }, start, press: () => press(W), release: () => release(W), step: (dt) => step(W, dt, view.VW), threshold, airtime, speedAt, generate, newWorld };
+  requestAnimationFrame(frame);
+
+  // ================= opening sequence (same as the Shema app) =================
+  (function () {
+    const intro = document.getElementById('intro');
+    const target = document.querySelector('.topbar .shema-logo');
+    if (EMBED && intro) intro.remove();
+    if (EMBED || !intro || !target) { document.body.classList.remove('intro-on'); return; }
+    const logo = target.cloneNode(true);
+    intro.querySelector('.intro-stage').appendChild(logo);
+    const INTRO_HOLD_MS = 2950, INTRO_FLY_MS = 800;
+    let flying = false, holdTimer = 0;
+    function fly() {
+      if (flying) return; flying = true; clearTimeout(holdTimer);
+      intro.classList.add('done');
+      const from = logo.getBoundingClientRect(), to = target.getBoundingClientRect();
+      void logo.offsetWidth; intro.classList.add('fly');
+      if (to.width > 0 && from.width > 0) logo.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width})`;
+      else logo.style.opacity = '0';
+      setTimeout(finish, INTRO_FLY_MS);
+    }
+    function finish() { document.body.classList.remove('intro-on'); intro.remove(); document.removeEventListener('keydown', onKey, true); }
+    function onKey(e) { e.preventDefault(); e.stopPropagation(); fly(); }
+    intro.addEventListener('click', fly);
+    document.addEventListener('keydown', onKey, true);
+    if (reduced) { intro.classList.add('done'); holdTimer = setTimeout(fly, 400); }
+    else holdTimer = setTimeout(fly, INTRO_HOLD_MS);
+  })();
+})();
+
+</script>
+
+</body></html>
