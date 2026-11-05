@@ -11,6 +11,15 @@
   .shema-logo.egg-hot { cursor: pointer; border-radius: 6px; transition: transform .15s ease; }
   .shema-logo.egg-hot:hover { transform: scale(1.04); }
   .shema-logo.egg-hot:active { transform: scale(.97); }
+  /* every 8 s a soft amber glow pulses through the logo to invite a tap; stops once the egg is found */
+  .shema-logo.egg-hot.egg-tease { animation: eggTease 8s ease-in-out 2s infinite; }
+  .shema-logo.egg-hot.egg-tease:hover { animation: none; filter: drop-shadow(0 0 6px var(--amber)); }
+  @keyframes eggTease {
+    0%, 82%, 100% { filter: drop-shadow(0 0 0 transparent); }
+    87% { filter: drop-shadow(0 0 7px var(--amber)) drop-shadow(0 0 14px var(--amber-glow)) brightness(1.15); }
+    91% { filter: drop-shadow(0 0 2px var(--amber)); }
+    95% { filter: drop-shadow(0 0 7px var(--amber)) drop-shadow(0 0 14px var(--amber-glow)) brightness(1.15); }
+  }
   .shema-logo.egg-hot:focus-visible { outline: 2px solid var(--amber); outline-offset: 4px; }
   .egg { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; overflow-y: auto;
     padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
@@ -37,7 +46,7 @@
   .egg-foot { font-size: 13px !important; color: var(--text-2) !important; text-align: center; }
   .egg-go { align-self: center; margin-top: 4px; border: 0; border-radius: 10px; background: var(--amber); color: var(--bg-1); font: inherit; font-weight: 700; font-size: 15px; padding: 10px 22px; cursor: pointer; }
   .egg-go:hover { background: var(--amber-hi); }
-  @media (prefers-reduced-motion: reduce) { .egg, .egg-card { animation: none; } .shema-logo.egg-hot { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .egg, .egg-card, .shema-logo.egg-hot.egg-tease { animation: none; } .shema-logo.egg-hot { transition: none; } }
   @media (max-width: 420px) { .egg-card { padding: 22px 18px 18px; gap: 12px; } .egg h2 { font-size: 20px; } }`;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
@@ -81,6 +90,7 @@
     window.addEventListener('keydown', onKey, true);
     box.querySelector('.egg-go').focus({ preventScroll: true });
     try { localStorage.setItem('shema.egg', '1'); } catch (e) { }
+    logo.classList.remove('egg-tease');
   }
   function close() {
     if (box.hidden) return;
@@ -96,6 +106,8 @@
   for (const t of ['pointerdown', 'pointerup', 'touchstart']) box.addEventListener(t, e => e.stopPropagation());
 
   logo.classList.add('egg-hot');
+  let found = false; try { found = localStorage.getItem('shema.egg') === '1'; } catch (e) { }
+  if (!found) logo.classList.add('egg-tease');
   logo.setAttribute('tabindex', '0');
   logo.setAttribute('role', 'button');
   logo.setAttribute('aria-label', 'SHEMA — what does it mean?');
