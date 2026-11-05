@@ -326,6 +326,7 @@
               <button type="button" role="radio" data-d="hard"><b>Hard</b><span>she hears everything</span></button>
             </div>
             <div class="best" id="bestTxt"></div>
+            <div class="lb-mini" id="lbStart" hidden></div>
           </section>
         </div>
         <div class="deck-nav">
@@ -347,6 +348,7 @@
           <div class="stat"><div class="v" id="stCaught">0</div><div class="l">caught</div></div>
           <div class="stat"><div class="v" id="stLoud">0</div><div class="l">loudest dB(A)</div></div>
         </div>
+        <div class="lb" id="lbEnd" hidden></div>
         <div class="row"><button class="btn primary" id="btnAgain">Play again</button><button class="btn" id="btnLevel" type="button">Change difficulty</button><button class="btn" id="btnHome" type="button" title="Back to the game picker"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>All games</button><span class="best" id="bestTxt2"></span></div>
       </div>
     </div>
@@ -369,6 +371,8 @@
   </section>
 </div>
 
+<script src="lb-names.js"></script>
+<script src="leaderboard.js"></script>
 <script>
 (() => {
   'use strict';
@@ -1082,6 +1086,7 @@
     document.querySelectorAll('#diffPick button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.d === diffKey)));
     try { localStorage.setItem('shema.grandma.diff', diffKey); } catch (e) { }
     loadBest(); showBest();
+    if (window.ShemaBoard) ShemaBoard.mini($('lbStart'), 'grandma-' + diffKey);
   }
   document.querySelectorAll('#diffPick button').forEach(b => b.addEventListener('click', () => setDiff(b.dataset.d)));
   try { setDiff(localStorage.getItem('shema.grandma.diff') || 'normal'); } catch (e) { setDiff('normal'); }
@@ -1103,6 +1108,7 @@
     if (won) G.score += stars * 50;
     if (G.score > best) { best = G.score; try { localStorage.setItem('shema.grandma.best.' + diffKey, String(best)); } catch (e) { } }
     showBest();
+    if (window.ShemaBoard) ShemaBoard.submit($('lbEnd'), 'grandma-' + diffKey, D.name, G.score);
     $('endStars').textContent = won ? '★'.repeat(stars) + '☆'.repeat(3 - stars) : '';
     $('endStars').setAttribute('aria-label', won ? `${stars} of 3 stars` : '');
     $('endTitle').textContent = (won ? 'Grandma slept until 06:00' : `Grandma woke up at ${fmtClock(hour())}`) + ` · ${D.name}`;

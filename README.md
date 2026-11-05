@@ -10,11 +10,20 @@ Three small browser games for the Shema noise monitor (EPR400/402, H.J.G. Meyer)
 
 Tap the Shema logo (on the home screen or in any game's top bar) to find a hidden page about what the word Shema means (`shema-egg.js`).
 
-Sound is on by default (it starts on the first tap). No build step, no sign-in, nothing stored online. Best scores, difficulty and the sound setting are kept in the player's own browser (`localStorage`).
+Sound is on by default (it starts on the first tap). No build step and no sign-in. Best scores, difficulty and the sound setting are kept in the player's own browser (`localStorage`).
+
+## Leaderboard
+
+Let Grandma Sleep (one board per difficulty) and Squirrel Run share a leaderboard across everyone who plays. The end card of each game shows the top five, plus your own place if you are further down, and the last explainer card names the current leader.
+
+- **No accounts.** Each phone gets a random id in `localStorage` (`shema.player`). Its name, like "Sleepy Hadeda 42", is worked out from the id (`lb-names.js`), the same way in the browser and on the server, so players can't type names and the board can't show anything rude. Clearing the browser's data gives a new player.
+- **Server:** `api/scores.js`, a Vercel function. It keeps each player's best per board in Redis (one sorted set per board), checks the board name, id and score, ignores a second score from the same phone on the same board within 3 seconds, and never sends ids back.
+- **Not cheat-proof.** Scores come from the player's browser, so someone determined could post a fake one. Remove a score with `ZREM lb:<board> <id>` in the Upstash console (boards: `grandma-easy`, `grandma-normal`, `grandma-hard`, `squirrel`), or clear a board with `DEL lb:<board>`.
+- **Without the server** (a plain folder, the Claude artifact copy, offline, or before storage is connected) the board stays hidden and everything else works as before.
 
 ## Run locally
 
-Serve the folder (sounds need http, not `file://`):
+Serve the folder (sounds need http, not `file://`). The leaderboard stays hidden this way; `vercel dev` runs it too:
 
 ```
 python3 -m http.server 8000
@@ -39,6 +48,8 @@ Set `CHROME_PATH` if Chrome is somewhere unusual. The `tests/` folder is left ou
 ## Deploy
 
 Vercel: import this repository, framework preset "Other", no build command, output directory = repository root.
+
+For the leaderboard, connect storage once: in the Vercel project open **Storage**, choose **Upstash for Redis** (free plan), create it and connect it to this project, then redeploy. That sets `KV_REST_API_URL` and `KV_REST_API_TOKEN`, which `api/scores.js` reads (`UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` work too).
 
 ## Sprites and sounds
 

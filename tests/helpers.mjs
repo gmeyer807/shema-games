@@ -5,15 +5,56 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { chromium } from 'playwright-core';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
   '.webp': 'image/webp', '.png': 'image/png', '.mp3': 'audio/mpeg', '.svg': 'image/svg+xml' };
 
-export async function startServer() {
-  const server = http.createServer((req, res) => {
-    let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+// The leaderboard API (api/scores.js) runs for real in the test server, talking to a small in-memory
+// stand-in for Upstash Redis's /pipeline endpoint (only the commands the API uses).
+const scoresApi = createRequire(import.meta.url)('../api/scores.js');
+function fakeRedis() {
+  const Z = new Map(), K = new Map();
+  return function run([cmd, key, ...a]) {
+    cmd = String(cmd).toUpperCase();
+    if (cmd === 'SET') {
+      const until = K.get(key); if (a.includes('NX') && until && until > Date.now()) return null;
+      K.set(key, Date.now() + 1000 * (+a[a.indexOf('EX') + 1] || 1e6)); return 'OK';
+    }
+    if (!Z.has(key)) Z.set(key, new Map());
+    const z = Z.get(key), sorted = () => [...z].sort((p, q) => q[1] - p[1] || (p[0] < q[0] ? -1 : 1));
+    if (cmd === 'ZADD') { const [, s, m] = a; if (!z.has(m) || +s > z.get(m)) z.set(m, +s); return 1; }
+    if (cmd === 'ZCARD') return z.size;
+    if (cmd === 'ZREVRANGE') return sorted().slice(+a[0], +a[1] + 1).flatMap(([m, s]) => [m, String(s)]);
+    if (cmd === 'ZREVRANK') { const i = sorted().findIndex(x => x[0] === a[0]); return i < 0 ? null : i; }
+    if (cmd === 'ZSCORE') return z.has(a[0]) ? String(z.get(a[0])) : null;
+    return { error: `ERR unknown command ${cmd}` };
+  };
+}
+
+async function readBody(req) { let b = ''; for await (const c of req) b += c; return b; }
+
+/** Static server for the repo, plus the leaderboard API. `opts.leaderboard: false` leaves the API out (404). */
+export async function startServer(opts = {}) {
+  const redis = fakeRedis();
+  const server = http.createServer(async (req, res) => {
+    const u = new URL(req.url, 'http://x');
+    if (u.pathname === '/redis/pipeline') {
+      const out = JSON.parse(await readBody(req)).map(c => { const r = redis(c); return r && r.error ? r : { result: r }; });
+      res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(out)); return;
+    }
+    if (u.pathname === '/api/scores' && opts.leaderboard !== false) {
+      const body = await readBody(req);
+      req.query = Object.fromEntries(u.searchParams);
+      try { req.body = body ? JSON.parse(body) : undefined; } catch (e) { req.body = body; }
+      process.env.KV_REST_API_URL = `http://127.0.0.1:${server.address().port}/redis`; process.env.KV_REST_API_TOKEN = 'test';
+      const r = { status(c) { res.statusCode = c; return r; }, setHeader: (k, v) => res.setHeader(k, v),
+        json(o) { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(o)); } };
+      await scoresApi(req, r); return;
+    }
+    let p = decodeURIComponent(u.pathname);
     if (p === '/') p = '/index.html';
     const file = path.join(ROOT, p);
     if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end('not found'); return; }

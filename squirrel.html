@@ -343,6 +343,7 @@
             <h1>Hide in the noise</h1>
             <p>Jump over cats and hadedas. Leafy trees hide you from the beam, and rain or a passing taxi makes the street so noisy that Shema can hardly pick you out. To drop to a lower roof, just run off the edge. Grab acorns for points and the paw badge for 6 quiet seconds.</p>
             <div class="best" id="bestStart"></div>
+            <div class="lb-mini" id="lbStart" hidden></div>
           </section>
         </div>
         <div class="deck-nav">
@@ -364,11 +365,14 @@
           <div class="stat"><div class="v" id="stLoud">0</div><div class="l">loudest dB(A)</div></div>
         </div>
         <div class="row"><button class="btn primary" id="btnAgain" type="button">Run again</button><button class="btn" id="btnHow" type="button">How to play</button><button class="btn" id="btnHome" type="button" title="Back to the game picker"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>All games</button><span class="best" id="bestTxt"></span></div>
+        <div class="lb" id="lbEnd" hidden></div>
       </div>
     </div>
   </main>
 </div>
 
+<script src="lb-names.js"></script>
+<script src="leaderboard.js"></script>
 <script>
 (() => {
   'use strict';
@@ -969,11 +973,12 @@
     $('endArt').textContent = `${metres(w)} m`;
     $('stScore').textContent = sc; $('stAcorns').textContent = w.acorns; $('stLoud').textContent = w.loudest ? Math.round(w.loudest) : '—';
     $('bestTxt').textContent = isBest ? 'New best!' : `Best: ${best}`;
+    if (window.ShemaBoard) ShemaBoard.submit($('lbEnd'), 'squirrel', '', sc);
     setTimeout(() => { $('endCard').hidden = false; $('btnAgain').focus({ preventScroll: true }); }, why === 'caught' ? 700 : 500);
   }
   $('btnAgain').addEventListener('click', start);
   $('btnHome').addEventListener('click', () => { if (SHELL) SHELL.openPicker(); else location.href = 'index.html'; });
-  $('btnHow').addEventListener('click', () => { $('endCard').hidden = true; $('startCard').hidden = false; showSlide(0, 1); });
+  $('btnHow').addEventListener('click', () => { $('endCard').hidden = true; $('startCard').hidden = false; showSlide(0, 1); if (window.ShemaBoard) ShemaBoard.mini($('lbStart'), 'squirrel'); });
 
   // input: anywhere on the street or the bottom panel is the jump button
   const pad = $('pad');
@@ -1203,6 +1208,7 @@
   }
   readTokens(); resize();
   showSlide(0, 1);
+  if (window.ShemaBoard) ShemaBoard.mini($('lbStart'), 'squirrel');
   if (location.hash === '#test') window.__r = { get W() { return W; }, start, press: () => press(W), release: () => release(W), step: (dt) => step(W, dt, view.VW), threshold, airtime, speedAt, generate, newWorld, end, ambient, SURF, H, HALF, JUMP, GRAV, get mode() { return mode; }, get view() { return view; }, get attract() { return attract; }, get best() { return best; } };
   requestAnimationFrame(frame);
 
