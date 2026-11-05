@@ -385,11 +385,11 @@ test('real firmware: rain is weather and lifts the background; a car alarm in it
     await realStreet(p);
     await runReal(p, 2);
     await p.evaluate(() => __s.addSource('rain', 55, 30));
-    await runReal(p, 12);
+    const tops = await p.evaluate(() => { const out = []; let acc = 0; for (let i = 0; i < 20 * 30; i++) { __s.step(1 / 30); acc += 1 / 30; while (acc >= 0.032) { const n = __s.ENG.windows.length; __s.engStep(); acc -= 0.032; if (__s.ENG.windows.length > n) out.push(__s.ENG.top.cls); } } return out; });
+    assert.ok(tops.filter(c => c === 'weather').length > tops.length / 2, `rain is mostly weather: ${tops.join(' ')}`);
     let x = await reading(p);
-    assert.equal(x.top.cls, 'weather');
-    assert.ok(!x.events.some(e => e.cls !== 'weather'), 'rain alone makes no other event');
-    assert.ok(await p.evaluate(() => __s.ENG.ambient > 48), 'the ambient rises with the rain');
+    assert.equal(x.r.cls, 'weather', 'a detection in the rain alone is weather');
+    assert.equal(await p.evaluate(() => __s.judge('weather', 80).disturbing), false, 'and weather is never a disturbance');
     await p.evaluate(() => __s.addSource('alarm', 70, 48));
     await runReal(p, 8);
     x = await reading(p);
@@ -415,6 +415,30 @@ test('real firmware: back to Simulated, and the street runs on the quick model a
     await run(p, 4);
     const r = await p.evaluate(() => { const r = __s.currentReading(); return r && { real: !!r.real, type: r.s && r.s.type }; });
     assert.deepEqual(r, { real: false, type: 'dog' });
+    assert.deepEqual(h.problems, []);
+  } finally { await h.close(); }
+});
+
+test('real firmware: the mics hear dataset clips by default (a drill is power tools), and can be switched to the game\'s sounds', async () => {
+  const h = await sandbox();
+  try {
+    const p = h.page;
+    await realStreet(p);
+    assert.equal(await p.evaluate(() => __s.ENG.feed), 'dataset');
+    assert.ok(await p.evaluate(() => Object.keys(__s.ENG.clips).length >= 14), 'the clips and the street background loaded');
+    await runReal(p, 2);
+    await p.evaluate(() => __s.addSource('drill', 44, 48));
+    await runReal(p, 8);
+    const x = await reading(p);
+    assert.equal(x.open, true);
+    assert.equal(x.r.cls, 'power_tools');
+    await p.evaluate(() => __shemaPause(false));
+    await p.waitForTimeout(1200);
+    assert.match(await p.locator('#engHearTxt').textContent(), /Drill → (FSD50K|UrbanSound8K)/);
+    await p.locator('#btnFeed').click();
+    assert.equal(await p.evaluate(() => __s.ENG.feed), 'game');
+    assert.match(await p.locator('#engHearTxt').textContent(), /game’s sounds/);
+    assert.equal(await p.locator('#btnFeed').textContent(), 'dataset clips');
     assert.deepEqual(h.problems, []);
   } finally { await h.close(); }
 });

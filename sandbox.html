@@ -141,6 +141,10 @@
   .engine .sub b { color: var(--text-1); font-weight: 600; }
   .engine.real { border-color: var(--amber); box-shadow: 0 0 0 3px var(--amber-glow); }
   .engine .bad { color: var(--red); }
+  .engine .hear { display: flex; align-items: center; gap: 8px; padding-top: 6px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 11px; color: var(--text-2); line-height: 1.4; }
+  .engine .hear span { flex: 1; min-width: 0; }
+  .engine .hear b { color: var(--text-0); font-weight: 600; }
+  .engine .hear .linkbtn { margin: -6px -8px -6px 0; flex-shrink: 0; }
 
   .lvl-row { display: flex; align-items: baseline; gap: 8px; }
   .lvl-big { font-size: 44px; font-weight: 700; letter-spacing: -.03em; line-height: 1; }
@@ -378,6 +382,7 @@
         <button id="btnReal" type="button" aria-pressed="false">Real firmware</button>
       </div>
       <div class="sub" id="engSub">Quick rules of thumb stand in for Shema. Switch to <b>Real firmware</b> to run the device's own level meter, direction finding and neural network on the four microphone signals of this street.</div>
+      <div class="hear" id="engHear" hidden><span id="engHearTxt"></span><button class="linkbtn" id="btnFeed" type="button"></button></div>
     </div>
     <div class="card status">
       <span class="pill" id="pill"><span class="dot"></span><span id="pillText">LISTENING</span></span>
@@ -580,7 +585,7 @@
 
   function judge(cls, rating) {
     const lim = limit(), acc = Math.max(lim, state.ambient);
-    const disturbing = rating > acc;
+    const disturbing = cls !== 'weather' && cls !== 'background' && rating > acc;   // weather and background are never a disturbance
     let nuisance = '';
     if (cls === 'power_tools' && state.night) nuisance = 'Power tools after 18:00';
     if (cls === 'music' && state.night && disturbing) nuisance = 'Loud music at night';
@@ -610,7 +615,7 @@
     ev.peak = Math.max(ev.peak, state.las);
     if (raining) ev.weather = true;
     if (r) {
-      if (ev.cls === 'unknown' || (r.real && (ev.cls === 'background' || ev.cls === 'weather'))) ev.cls = r.cls;
+      if (ev.cls === 'unknown' || (r.real && r.cls !== 'unknown')) ev.cls = r.cls;   // real: the detection's class, over all its windows
       if (r.cls === ev.cls) { if (!r.real || r.located) ev.bearing = r.bearing; ev.rating = Math.max(ev.rating, r.rating); }
     }
     ev.verdict = ev.cls === 'unknown' ? null : judge(ev.cls, ev.rating);
@@ -1229,6 +1234,7 @@
   const ENG = {
     on: false, state: 'off',               // off | loading | ready | failed
     E: null, mem: null, rec: {}, recDb: {}, classes: [], micX: [], cal: 120,
+    clips: {}, clipInfo: {}, loop: {}, feed: 'game', hearing: null,
     n: 0, acc: 0, buf: null,
     amb: null, ambDb: 0, rain: null, rainDb: 0,
     las: 45, laeq: 45, ambient: 45, ambSeed: 0, open: false, quiet: 0, lasLog: [],
@@ -1236,7 +1242,8 @@
   };
   const FS = 48000, BUF_N = 1536, BUF_S = BUF_N / FS, MIC_Z = 1.5;   // sources about 1.5 m below the board
   const ENG_TONAL = { music: 5, alarm: 5, engine: 5 };               // the Sandbox's tonal corrections, by class
-  const ENG_SURE = 0.5;                                              // a class counts from 50 %, below = unknown
+  const ENG_SURE = 0.5;
+  const CLIP_DB = -20;                                               // the dataset clips are all set to this A-weighted level                                              // a class counts from 50 %, below = unknown
   function engStr(p) { const b = new Uint8Array(ENG.mem.buffer, p); let s = ''; for (let k = 0; b[k]; k++) s += String.fromCharCode(b[k]); return s; }
   function engMeasure(x) {   // A-weighted level of a float signal, in dB re full scale 1.0, through the firmware's A filter
     const E = ENG.E; E.engine_measure_begin();
@@ -1276,8 +1283,28 @@
         ENG.rec[k] = x; ENG.recDb[k] = engMeasure(x);
       }));
       // the background: four independent, softly coloured noises (one per mic), and a hiss for rain
-      ENG.amb = [0, 1, 2, 3].map(m => noise(FS * 3, 0.25, 11 + m)); ENG.ambDb = engMeasure(ENG.amb[0]);
-      ENG.rain = [0, 1, 2, 3].map(m => noise(FS * 3, 1, 101 + m)); ENG.rainDb = engMeasure(ENG.rain[0]);
+      // clips from the network's own training sources that it gets right, clean and over street background
+      // (picked by engine/pick-clips.mjs: assets/dataset/clips.json has where each comes from and its licence)
+      try {
+        const info = await (await fetch('assets/dataset/clips.json')).json();
+        await Promise.all(Object.entries(info).map(async ([k, list]) => {
+          const xs = await Promise.all(list.map(async c => {
+            const b = await new AC(1, 1, FS).decodeAudioData(await (await fetch(c.file)).arrayBuffer());
+            const x = b.getChannelData(0).slice(), g = Math.pow(10, (CLIP_DB - engMeasure(x)) / 20);   // every clip at the same A-weighted level
+            for (let i = 0; i < x.length; i++) x[i] *= g;
+            return x;
+          }));
+          ENG.clips[k] = xs; ENG.clipInfo[k] = list;
+          const all = new Float32Array(xs.reduce((a, x) => a + x.length, 0)); let o = 0; for (const x of xs) { all.set(x, o); o += x.length; }
+          ENG.loop[k] = all;
+        }));
+      } catch (e) { ENG.clips = {}; }
+      // the street's background: real street ambience (SONYC) when it loaded, a different stretch of it at each mic
+      if (ENG.loop.ambient) { ENG.amb = [0, 1, 2, 3].map(() => ENG.loop.ambient); ENG.ambDb = engMeasure(ENG.loop.ambient); ENG.ambStep = Math.floor(ENG.loop.ambient.length / 4); }
+      else { ENG.amb = [0, 1, 2, 3].map(m => noise(FS * 3, 0.25, 11 + m)); ENG.ambDb = engMeasure(ENG.amb[0]); ENG.ambStep = 9973; }
+      if (ENG.loop.rain) { ENG.rain = [0, 1, 2, 3].map(() => ENG.loop.rain); ENG.rainDb = engMeasure(ENG.loop.rain); ENG.rainStep = Math.floor(ENG.loop.rain.length / 4); }
+      else { ENG.rain = [0, 1, 2, 3].map(m => noise(FS * 3, 1, 101 + m)); ENG.rainDb = engMeasure(ENG.rain[0]); ENG.rainStep = 7919; }
+      ENG.feed = ENG.clips.dog ? 'dataset' : 'game';
       ENG.buf = new Int32Array(ENG.mem.buffer, E.engine_buffer(), BUF_N * 4);
       ENG.state = 'ready';
     } catch (e) {
@@ -1302,23 +1329,32 @@
     const toGain = (dBA, measuredDb) => Math.pow(10, (dBA - ENG.cal - measuredDb) / 20);
     // background: different noise at each mic, so it has no direction
     const ambG = toGain(baseAmbient(), ENG.ambDb);
-    for (let m = 0; m < 4; m++) add(ENG.amb[m], ambG, m, -m * 9973);
-    if (state.sources.some(s => s.type === 'rain')) { const g = toGain(RAIN_dBA, ENG.rainDb); for (let m = 0; m < 4; m++) add(ENG.rain[m], g, m, -m * 7919); }
+    for (let m = 0; m < 4; m++) add(ENG.amb[m], ambG, m, -m * ENG.ambStep);
+    if (state.sources.some(s => s.type === 'rain')) { const g = toGain(RAIN_dBA, ENG.rainDb); for (let m = 0; m < 4; m++) add(ENG.rain[m], g, m, -m * ENG.rainStep); }
+    let loudest = null;
     const tNow = n0 / FS;
     for (const s of state.sources) {
-      const x = ENG.rec[s.type]; if (!x || !s.g) continue;
+      if (!s.g) continue;
+      // what the mics hear: the network's own kind of audio (dataset clips), or the game's recording you hear
+      const clips = ENG.feed === 'dataset' && ENG.clips[s.type];
+      const r = s.rt || (s.rt = { start: n0, busy: 0, was: false, first: true, i: 0, x: null });
+      let x = clips ? (CALLS.has(s.type) ? (r.x || (r.x = clips[0])) : ENG.loop[s.type]) : ENG.rec[s.type];
+      if (!x) continue;
       const T = TYPES[s.type], L = T.L10 - 20 * Math.log10(s.g.d / 10) - (s.g.behind ? 12 : 0);
-      const g = toGain(L, ENG.recDb[s.type]);
-      // when the recording plays: the same as what you hear (updateAudio)
+      if (!loudest || L > loudest.L) loudest = { L, s, r };
+      // when it plays: the same as what you hear (updateAudio)
       const on = pattern(s, simT) > -20;
-      const r = s.rt || (s.rt = { start: n0, busy: 0, was: false, first: true });
       let gate = 1;
       if (CALLS.has(s.type)) {
-        if ((r.first || (on && !r.was)) && tNow >= r.busy) { r.first = false; r.start = n0; r.busy = tNow + x.length / FS * 0.85; }
+        if ((r.first || (on && !r.was)) && tNow >= r.busy) {
+          if (clips) { r.x = x = clips[r.i++ % clips.length]; r.clip = (r.i - 1) % clips.length; }   // a different clip each call
+          r.first = false; r.start = n0; r.busy = tNow + x.length / FS * 0.85;
+        }
         r.was = on;
         if (n0 - r.start > x.length) continue;          // finished: silent until it starts again
       } else if (s.type === 'drill' && !on) gate = 0;
       if (!gate) continue;
+      const g = toGain(L, clips ? CLIP_DB : ENG.recDb[s.type]);
       const src = s.rt.start;
       for (let m = 0; m < 4; m++) {
         const dx = s.x - (DEV.x + mics[m]), dy = DEV.y - s.y;   // metres; the mic line runs along the wall (+x = right)
@@ -1333,6 +1369,7 @@
         }
       }
     }
+    ENG.hearing = loudest && { type: loudest.s.type, clip: loudest.r.clip || 0 };
     for (let i = 0; i < acc.length; i++) buf[i] = Math.max(-2147483647, Math.min(2147483647, Math.round(acc[i] * 2147483648)));
     ENG.n += BUF_N;
   }
@@ -1384,12 +1421,18 @@
   }
 
   // the detection's class: the sound class with the most probability over its 2 s windows that was sure (50 %) in
-  // at least one of them; a dog that barks now and then still leaves some windows of background between barks.
-  // Background or weather only when no sound class ever was.
+  // at least a third of them; a dog that barks now and then still leaves some windows of background between
+  // barks, and a stray window of engine in the rain does not make the rain an engine.
+  // Otherwise background or weather, whichever the last window was.
   function engClass() {
     if (!ENG.windows.length) return { cls: 'unknown', p: 0 };
+    const need = Math.max(1, Math.ceil(ENG.windows.length / 3));
     let best = -1;
-    ENG.classes.forEach((c, i) => { if (c !== 'background' && c !== 'weather' && ENG.maxp[i] >= ENG_SURE && (best < 0 || ENG.sum[i] > ENG.sum[best])) best = i; });
+    ENG.classes.forEach((c, i) => {
+      if (c === 'background' || c === 'weather') return;
+      if (ENG.windows.filter(w => w.cls === c && w.p >= ENG_SURE).length < need) return;
+      if (best < 0 || ENG.sum[i] > ENG.sum[best]) best = i;
+    });
     if (best < 0) { const t = ENG.windows[ENG.windows.length - 1]; return { cls: t.p >= ENG_SURE ? t.cls : 'unknown', p: t.p }; }
     return { cls: ENG.classes[best], p: ENG.probs[best] };
   }
@@ -1420,6 +1463,16 @@
     $('btnSim').setAttribute('aria-pressed', String(!real));
     $('btnReal').setAttribute('aria-pressed', String(real));
     $('engCard').classList.toggle('real', real);
+    const hear = $('engHear');
+    hear.hidden = !(real && ENG.state === 'ready' && Object.keys(ENG.clips).length);
+    if (!hear.hidden) {
+      const h = ENG.hearing, info = h && ENG.feed === 'dataset' && ENG.clipInfo[h.type] && ENG.clipInfo[h.type][h.clip];
+      $('engHearTxt').innerHTML = ENG.feed !== 'dataset' ? 'Mics hear: <b>the game’s sounds</b>'
+        : info ? `Mics hear: <b>${TYPES[h.type].name}</b> \u2192 ${info.dataset} \u201c${info.labels.replace(/_/g, ' ')}\u201d ${String(info.id).replace(/\.wav$/, '')}`
+        : h ? `Mics hear: <b>${TYPES[h.type].name}</b> (no dataset clip: the game’s sound)` : 'Mics hear: <b>dataset clips</b>';
+      $('btnFeed').textContent = ENG.feed === 'dataset' ? 'game sounds' : 'dataset clips';
+      $('btnFeed').setAttribute('aria-label', ENG.feed === 'dataset' ? 'Feed the mics the game’s sounds instead' : 'Feed the mics dataset clips instead');
+    }
     $('simNote').textContent = real
       ? 'Real firmware: the street makes what Shema’s four mics (50 mm apart along the wall) would hear, from the same recordings you hear, and the device’s own code measures, locates and classifies it. The Sandbox still opens and closes detections (ambient + 7 dB, learnt in seconds rather than minutes) and gives the verdict.'
       : SIM_NOTE;
@@ -1435,9 +1488,12 @@
       sub.innerHTML = `<span class="bad">The firmware could not start here (${ENG.error}).</span> Switch back to Simulated.`;
     } else {
       note.textContent = ENG.msN ? `${(ENG.ms / ENG.msN).toFixed(2)} ms / 32 ms buffer` : 'running';
-      sub.innerHTML = 'The device’s own level meter, SRP-PHAT direction finding and int8 neural network, hearing this street through its 4 mics. Self-test passed.';
+      sub.innerHTML = ENG.feed === 'dataset'
+        ? 'The device’s own level meter, SRP-PHAT direction finding and int8 neural network. Its 4 mics hear clips from its own training sources that it gets right (and real street background), while you hear the game’s sounds. Self-test passed.'
+        : 'The device’s own level meter, SRP-PHAT direction finding and int8 neural network. Its 4 mics hear the same game recordings you do, which the network never trained on. Self-test passed.';
     }
   }
+  $('btnFeed').addEventListener('click', () => { ENG.feed = ENG.feed === 'dataset' ? 'game' : 'dataset'; for (const s of state.sources) s.rt = null; engUi(); });
   $('btnSim').addEventListener('click', () => { if (ENG.on) engSet(false); });
   $('btnReal').addEventListener('click', () => { if (!ENG.on) engSet(true); });
 

@@ -6,7 +6,7 @@ Three small browser games for the Shema noise monitor (EPR400/402, H.J.G. Meyer)
 
 - **Let Grandma Sleep** (`grandma.html`): tap noises on the street so Shema catches them before they wake Grandma. Easy / Normal / Hard.
 - **Squirrel Run** (`squirrel.html`): a side-view runner, best with the phone sideways. Jump across roofs, trees and power lines without making enough noise for Shema to lock on. Falling or getting caught ends the run.
-- **Sandbox** (`sandbox.html`): drag noises onto the street and watch Shema measure, locate, classify and judge them (simplified SANS 10103 rules). A switch in the readout runs the device's **real firmware** instead: its own A-weighting, SRP-PHAT direction finding and int8 mel-CNN, compiled to WebAssembly (`shema-engine.wasm`) and fed what its four mics would hear. See `engine/README.md`.
+- **Sandbox** (`sandbox.html`): drag noises onto the street and watch Shema measure, locate, classify and judge them (simplified SANS 10103 rules). A switch in the readout runs the device's **real firmware** instead: its own A-weighting, SRP-PHAT direction finding and int8 mel-CNN, compiled to WebAssembly (`shema-engine.wasm`) and fed what its four mics would hear. Its mics hear clips from the network's own training sources (credited in `assets/dataset/CREDITS.md`) while you hear the game's sounds. See `engine/README.md`.
 
 Tap the Shema logo (on the home screen or in any game's top bar) to find a hidden page about what the word Shema means (`shema-egg.js`).
 

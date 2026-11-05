@@ -1,0 +1,444 @@
+{
+ "ambient": [
+  {
+   "file": "assets/dataset/ambient-1.wav",
+   "class": "background",
+   "dataset": "SONYC-UST",
+   "id": "05_012805.wav",
+   "labels": "background",
+   "url": "https://zenodo.org/records/3966543",
+   "licence": "CC BY 4.0"
+  },
+  {
+   "file": "assets/dataset/ambient-2.wav",
+   "class": "background",
+   "dataset": "SONYC-UST",
+   "id": "38_003232.wav",
+   "labels": "background",
+   "url": "https://zenodo.org/records/3966543",
+   "licence": "CC BY 4.0"
+  },
+  {
+   "file": "assets/dataset/ambient-3.wav",
+   "class": "background",
+   "dataset": "SONYC-UST",
+   "id": "20_007071.wav",
+   "labels": "background",
+   "url": "https://zenodo.org/records/3966543",
+   "licence": "CC BY 4.0"
+  },
+  {
+   "file": "assets/dataset/ambient-4.wav",
+   "class": "background",
+   "dataset": "SONYC-UST",
+   "id": "19_003840.wav",
+   "labels": "background",
+   "url": "https://zenodo.org/records/3966543",
+   "licence": "CC BY 4.0"
+  },
+  {
+   "file": "assets/dataset/ambient-5.wav",
+   "class": "background",
+   "dataset": "SONYC-UST",
+   "id": "11_007992.wav",
+   "labels": "background",
+   "url": "https://zenodo.org/records/3966543",
+   "licence": "CC BY 4.0"
+  },
+  {
+   "file": "assets/dataset/ambient-6.wav",
+   "class": "background",
+   "dataset": "SONYC-UST",
+   "id": "27_003459.wav",
+   "labels": "background",
+   "url": "https://zenodo.org/records/3966543",
+   "licence": "CC BY 4.0"
+  },
+  {
+   "file": "assets/dataset/ambient-7.wav",
+   "class": "background",
+   "dataset": "SONYC-UST",
+   "id": "18_010513.wav",
+   "labels": "background",
+   "url": "https://zenodo.org/records/3966543",
+   "licence": "CC BY 4.0"
+  },
+  {
+   "file": "assets/dataset/ambient-8.wav",
+   "class": "background",
+   "dataset": "SONYC-UST",
+   "id": "18_000134.wav",
+   "labels": "background",
+   "url": "https://zenodo.org/records/3966543",
+   "licence": "CC BY 4.0"
+  }
+ ],
+ "dog": [
+  {
+   "file": "assets/dataset/dog-1.wav",
+   "class": "dog",
+   "dataset": "SONYC-UST",
+   "id": "01_003445.wav",
+   "labels": "dog",
+   "url": "https://zenodo.org/records/3966543",
+   "licence": "CC BY 4.0"
+  },
+  {
+   "file": "assets/dataset/dog-2.wav",
+   "class": "dog",
+   "dataset": "FSD50K",
+   "id": "365053",
+   "labels": "Bark",
+   "url": "https://freesound.org/s/365053/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/dog-3.wav",
+   "class": "dog",
+   "dataset": "FSD50K",
+   "id": "193394",
+   "labels": "Bark",
+   "url": "https://freesound.org/s/193394/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  }
+ ],
+ "squirrel": [
+  {
+   "file": "assets/dataset/squirrel-1.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "416125",
+   "labels": "Chirp_and_tweet",
+   "url": "https://freesound.org/s/416125/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/squirrel-2.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "353226",
+   "labels": "Chirp_and_tweet",
+   "url": "https://freesound.org/s/353226/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/squirrel-3.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "395831",
+   "labels": "Chirp_and_tweet",
+   "url": "https://freesound.org/s/395831/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  }
+ ],
+ "owl": [
+  {
+   "file": "assets/dataset/owl-1.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "244458",
+   "labels": "Chirp_and_tweet",
+   "url": "https://freesound.org/s/244458/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/owl-2.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "427434",
+   "labels": "Chirp_and_tweet",
+   "url": "https://freesound.org/s/427434/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/owl-3.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "242708",
+   "labels": "Bird_vocalization_and_bird_call_and_bird_song",
+   "url": "https://freesound.org/s/242708/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  }
+ ],
+ "taxi": [
+  {
+   "file": "assets/dataset/taxi-1.wav",
+   "class": "alarm",
+   "dataset": "FSD50K",
+   "id": "184355",
+   "labels": "Vehicle_horn_and_car_horn_and_honking",
+   "url": "https://freesound.org/s/184355/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/taxi-2.wav",
+   "class": "alarm",
+   "dataset": "UrbanSound8K",
+   "id": "174841",
+   "labels": "car_horn",
+   "url": "https://freesound.org/s/174841/",
+   "licence": "CC BY-NC 3.0"
+  },
+  {
+   "file": "assets/dataset/taxi-3.wav",
+   "class": "alarm",
+   "dataset": "FSD50K",
+   "id": "425848",
+   "labels": "Vehicle_horn_and_car_horn_and_honking",
+   "url": "https://freesound.org/s/425848/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  }
+ ],
+ "boombox": [
+  {
+   "file": "assets/dataset/boombox-1.wav",
+   "class": "music",
+   "dataset": "FSD50K",
+   "id": "69735",
+   "labels": "Bass_guitar",
+   "url": "https://freesound.org/s/69735/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/boombox-2.wav",
+   "class": "music",
+   "dataset": "FSD50K",
+   "id": "239658",
+   "labels": "Bass_guitar",
+   "url": "https://freesound.org/s/239658/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  }
+ ],
+ "vuvuzela": [
+  {
+   "file": "assets/dataset/vuvuzela-1.wav",
+   "class": "music",
+   "dataset": "FSD50K",
+   "id": "25894",
+   "labels": "Wind_instrument_and_woodwind_instrument",
+   "url": "https://freesound.org/s/25894/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/vuvuzela-2.wav",
+   "class": "music",
+   "dataset": "FSD50K",
+   "id": "172860",
+   "labels": "Accordion",
+   "url": "https://freesound.org/s/172860/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/vuvuzela-3.wav",
+   "class": "music",
+   "dataset": "FSD50K",
+   "id": "359775",
+   "labels": "Wind_instrument_and_woodwind_instrument",
+   "url": "https://freesound.org/s/359775/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  }
+ ],
+ "drill": [
+  {
+   "file": "assets/dataset/drill-1.wav",
+   "class": "power_tools",
+   "dataset": "FSD50K",
+   "id": "274853",
+   "labels": "Drill",
+   "url": "https://freesound.org/s/274853/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/drill-2.wav",
+   "class": "power_tools",
+   "dataset": "UrbanSound8K",
+   "id": "195063",
+   "labels": "drilling",
+   "url": "https://freesound.org/s/195063/",
+   "licence": "CC BY-NC 3.0"
+  },
+  {
+   "file": "assets/dataset/drill-3.wav",
+   "class": "power_tools",
+   "dataset": "UrbanSound8K",
+   "id": "14111",
+   "labels": "drilling",
+   "url": "https://freesound.org/s/14111/",
+   "licence": "CC BY-NC 3.0"
+  }
+ ],
+ "alarm": [
+  {
+   "file": "assets/dataset/alarm-1.wav",
+   "class": "alarm",
+   "dataset": "SONYC-UST",
+   "id": "16_001564.wav",
+   "labels": "alarm",
+   "url": "https://zenodo.org/records/3966543",
+   "licence": "CC BY 4.0"
+  },
+  {
+   "file": "assets/dataset/alarm-2.wav",
+   "class": "alarm",
+   "dataset": "SONYC-UST",
+   "id": "16_017178.wav",
+   "labels": "alarm",
+   "url": "https://zenodo.org/records/3966543",
+   "licence": "CC BY 4.0"
+  },
+  {
+   "file": "assets/dataset/alarm-3.wav",
+   "class": "alarm",
+   "dataset": "SONYC-UST",
+   "id": "38_019522.wav",
+   "labels": "alarm",
+   "url": "https://zenodo.org/records/3966543",
+   "licence": "CC BY 4.0"
+  }
+ ],
+ "frog": [
+  {
+   "file": "assets/dataset/frog-1.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "32511",
+   "labels": "Frog",
+   "url": "https://freesound.org/s/32511/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/frog-2.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "56765",
+   "labels": "Frog",
+   "url": "https://freesound.org/s/56765/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/frog-3.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "268960",
+   "labels": "Frog",
+   "url": "https://freesound.org/s/268960/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  }
+ ],
+ "mosquito": [
+  {
+   "file": "assets/dataset/mosquito-1.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "20062",
+   "labels": "Insect",
+   "url": "https://freesound.org/s/20062/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/mosquito-2.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "62202",
+   "labels": "Insect",
+   "url": "https://freesound.org/s/62202/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/mosquito-3.wav",
+   "class": "background",
+   "dataset": "ESC-50",
+   "id": "172143",
+   "labels": "crickets",
+   "url": "https://freesound.org/s/172143/",
+   "licence": "CC BY-NC 3.0"
+  }
+ ],
+ "hadeda": [
+  {
+   "file": "assets/dataset/hadeda-1.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "60938",
+   "labels": "Gull_and_seagull",
+   "url": "https://freesound.org/s/60938/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/hadeda-2.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "194948",
+   "labels": "Chirp_and_tweet",
+   "url": "https://freesound.org/s/194948/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/hadeda-3.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "379087",
+   "labels": "Gull_and_seagull",
+   "url": "https://freesound.org/s/379087/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  }
+ ],
+ "rooster": [
+  {
+   "file": "assets/dataset/rooster-1.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "233160",
+   "labels": "Chicken_and_rooster",
+   "url": "https://freesound.org/s/233160/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/rooster-2.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "249724",
+   "labels": "Chicken_and_rooster",
+   "url": "https://freesound.org/s/249724/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/rooster-3.wav",
+   "class": "background",
+   "dataset": "FSD50K",
+   "id": "378098",
+   "labels": "Chicken_and_rooster",
+   "url": "https://freesound.org/s/378098/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  }
+ ],
+ "rain": [
+  {
+   "file": "assets/dataset/rain-1.wav",
+   "class": "weather",
+   "dataset": "FSD50K",
+   "id": "22926",
+   "labels": "Thunder",
+   "url": "https://freesound.org/s/22926/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/rain-2.wav",
+   "class": "weather",
+   "dataset": "FSD50K",
+   "id": "2535",
+   "labels": "Thunder",
+   "url": "https://freesound.org/s/2535/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  },
+  {
+   "file": "assets/dataset/rain-3.wav",
+   "class": "weather",
+   "dataset": "FSD50K",
+   "id": "352823",
+   "labels": "Thunder",
+   "url": "https://freesound.org/s/352823/",
+   "licence": "its Freesound licence (CC0, CC BY or CC BY-NC)"
+  }
+ ]
+}
