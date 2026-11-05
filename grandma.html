@@ -1087,7 +1087,7 @@
     document.querySelectorAll('#diffPick button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.d === diffKey)));
     try { localStorage.setItem('shema.grandma.diff', diffKey); } catch (e) { }
     loadBest(); showBest();
-    if (window.ShemaBoard) ShemaBoard.mini($('lbStart'), 'grandma-' + diffKey);
+    if (window.ShemaBoard) ShemaBoard.mini($('lbStart'), 'grandma-' + diffKey, best);
   }
   document.querySelectorAll('#diffPick button').forEach(b => b.addEventListener('click', () => setDiff(b.dataset.d)));
   try { setDiff(localStorage.getItem('shema.grandma.diff') || 'normal'); } catch (e) { setDiff('normal'); }
@@ -1109,7 +1109,7 @@
     if (won) G.score += stars * 50;
     if (G.score > best) { best = G.score; try { localStorage.setItem('shema.grandma.best.' + diffKey, String(best)); } catch (e) { } }
     showBest();
-    if (window.ShemaBoard) ShemaBoard.submit($('lbEnd'), 'grandma-' + diffKey, D.name, G.score);
+    if (window.ShemaBoard) ShemaBoard.submit($('lbEnd'), 'grandma-' + diffKey, D.name, G.score, best);
     $('endStars').textContent = won ? '★'.repeat(stars) + '☆'.repeat(3 - stars) : '';
     $('endStars').setAttribute('aria-label', won ? `${stars} of 3 stars` : '');
     $('endTitle').textContent = (won ? 'Grandma slept until 06:00' : `Grandma woke up at ${fmtClock(hour())}`) + ` · ${D.name}`;

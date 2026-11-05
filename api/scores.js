@@ -51,9 +51,9 @@ module.exports = async function handler(req, res) {
       if (!BOARDS.has(board)) return res.status(400).json({ error: 'unknown board' });
       if (!ID_RE.test(id)) return res.status(400).json({ error: 'bad player id' });
       if (!Number.isInteger(score) || score < 1 || score > MAX_SCORE) return res.status(400).json({ error: 'bad score' });
-      // one finished game every few seconds per phone is plenty; ignore anything faster
-      const [fresh] = await redis([['SET', 'rl:' + board + ':' + id, '1', 'NX', 'EX', 3]]);
-      if (fresh === 'OK') await redis([['ZADD', 'lb:' + board, 'GT', score, id]]);
+      // GT keeps only the player's best, so a lower or repeated score changes nothing. (There used to be a
+      // 3-second spam limit here, but it silently threw away a new best that came in soon after a short run.)
+      await redis([['ZADD', 'lb:' + board, 'GT', score, id]]);
       return res.status(200).json(await standings('lb:' + board, id));
     }
     res.setHeader('Allow', 'GET, POST');

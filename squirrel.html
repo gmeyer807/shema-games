@@ -986,12 +986,12 @@
     $('endArt').textContent = `${metres(w)} m`;
     $('stScore').textContent = sc; $('stAcorns').textContent = w.acorns; $('stLoud').textContent = w.loudest ? Math.round(w.loudest) : '—';
     $('bestTxt').textContent = isBest ? 'New best!' : `Best: ${best}`;
-    if (window.ShemaBoard) ShemaBoard.submit($('lbEnd'), 'squirrel', '', sc);
+    if (window.ShemaBoard) ShemaBoard.submit($('lbEnd'), 'squirrel', '', sc, best);
     setTimeout(() => { $('endCard').hidden = false; $('btnAgain').focus({ preventScroll: true }); }, why === 'caught' ? 700 : 500);
   }
   $('btnAgain').addEventListener('click', start);
   $('btnHome').addEventListener('click', () => { if (SHELL) SHELL.openPicker(); else location.href = 'index.html'; });
-  $('btnHow').addEventListener('click', () => { $('endCard').hidden = true; $('startCard').hidden = false; showSlide(0, 1); if (window.ShemaBoard) ShemaBoard.mini($('lbStart'), 'squirrel'); });
+  $('btnHow').addEventListener('click', () => { $('endCard').hidden = true; $('startCard').hidden = false; showSlide(0, 1); if (window.ShemaBoard) ShemaBoard.mini($('lbStart'), 'squirrel', best); });
 
   // input: anywhere on the street or the bottom panel is the jump button
   const pad = $('pad');
@@ -1220,7 +1220,7 @@
   }
   readTokens(); resize();
   showSlide(0, 1);
-  if (window.ShemaBoard) ShemaBoard.mini($('lbStart'), 'squirrel');
+  if (window.ShemaBoard) ShemaBoard.mini($('lbStart'), 'squirrel', best);
   if (location.hash === '#test') window.__r = { get W() { return W; }, start, press: () => press(W), release: () => release(W), step: (dt) => step(W, dt, view.VW), threshold, airtime, speedAt, generate, newWorld, end, ambient, SURF, H, HALF, JUMP, GRAV, get mode() { return mode; }, get view() { return view; }, get attract() { return attract; }, get best() { return best; } };
   requestAnimationFrame(frame);
 

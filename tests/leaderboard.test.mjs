@@ -18,8 +18,7 @@ test('API: keeps each player\'s best, ranks them, and never sends ids back', asy
   for (let i = 1; i <= 7; i++) assert.equal((await post('grandma-hard', pid(i), i * 100)).status, 200);
   let r = await (await post('grandma-hard', pid(3), 50)).json();       // a worse score does not replace the best
   assert.equal(r.you.score, 300); assert.equal(r.you.rank, 5); assert.equal(r.you.name, nameFor(pid(3)));
-  await new Promise(res => setTimeout(res, 3100));                      // past the per-board spam limit
-  r = await (await post('grandma-hard', pid(3), 950)).json();
+  r = await (await post('grandma-hard', pid(3), 950)).json();          // a new best straight after is kept
   assert.equal(r.you.rank, 1); assert.equal(r.top[0].name, nameFor(pid(3))); assert.equal(r.top[0].me, true);
   assert.equal(r.players, 7);
   assert.ok(!JSON.stringify(r).includes('testplayer'), 'ids stay private');
@@ -101,4 +100,22 @@ test('no leaderboard server: the board stays hidden and the games still work', a
     assert.equal(await p.locator('#btnAgain').isVisible(), true);
     assert.deepEqual(h.problems.filter(x => !/\/api\/scores|status of 404/.test(x)), []);
   } finally { await h.close(); await bare.close(); }
+});
+
+test('A best that only this phone knows about reaches the board', async () => {
+  const h = await openPage(browser, server.url, '/squirrel.html#test', { viewport: { width: 844, height: 390 }, mobile: true, touch: true });
+  try {
+    const p = h.page;
+    await skipIntro(p); await p.waitForFunction(() => window.__r && window.ShemaBoard);
+    const me = await p.evaluate(() => ShemaBoard.me);
+    // the start card tops up the board from the phone's best
+    await p.evaluate(() => ShemaBoard.mini(document.getElementById('lbStart'), 'squirrel', 4321));
+    let g = await (await fetch(`${server.url}/api/scores?board=squirrel&id=${me.id}`)).json();
+    assert.equal(g.you.score, 4321);
+    // a short run still sends the best, and never lowers it
+    await p.evaluate(() => { __r.start(); __r.W.acorns = 1; __r.end(__r.W, 'fell'); });
+    await p.locator('#lbEnd li.me').waitFor();
+    g = await (await fetch(`${server.url}/api/scores?board=squirrel&id=${me.id}`)).json();
+    assert.equal(g.you.score, 4321);
+  } finally { await h.close(); }
 });

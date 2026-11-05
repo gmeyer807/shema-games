@@ -84,12 +84,15 @@
     box.replaceChildren(...parts);
   }
 
-  // One line for the start card: who is on top.
-  async function mini(box, key) {
+  // One line for the start card: who is on top. If this phone has a better score than the board has for it
+  // (set before the leaderboard existed, or while offline), it is sent now so the board catches up.
+  async function mini(box, key, localBest) {
     if (!box) return;
     const mine = ++seq; box._seq = mine;
     box.className = 'lb-mini';
-    const d = await call(key, null);
+    let d = await call(key, null);
+    const lb = Math.round(+localBest || 0);
+    if (d && lb > 0 && (!d.you || d.you.score == null || d.you.score < lb)) d = (await call(key, lb)) || d;
     if (box._seq !== mine) return;
     const p = d && d.top[0];
     if (!p) { box.hidden = true; return; }
@@ -101,7 +104,8 @@
   window.ShemaBoard = {
     me,
     show: (box, key, label) => board(box, key, label, null),
-    submit: (box, key, label, score) => score > 0 ? board(box, key, label, Math.round(score)) : board(box, key, label, null),
+    // score is this game; best is this phone's best so far, sent too in case an earlier one never arrived
+    submit: (box, key, label, score, best) => { const s = Math.max(+score || 0, +best || 0); return s > 0 ? board(box, key, label, Math.round(s)) : board(box, key, label, null); },
     mini,
   };
 })();
